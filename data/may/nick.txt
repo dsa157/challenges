@@ -1,31 +1,31 @@
 May 01: Not listed in the image.
 May 02: Not listed in the image.
 May 03: Not listed in the image.
-May 04: Goblin (Week 1: Dungeons & Dragons)
-May 05: Orc (Week 1: Dungeons & Dragons)
-May 06: Dwarf (Week 1: Dungeons & Dragons)
-May 07: Mage (Week 1: Dungeons & Dragons)
-May 08: Necromancer (Week 1: Dungeons & Dragons)
-May 09: Critical Hit (Week 1: Dungeons & Dragons)
-May 10: Dungeon (Week 1: Dungeons & Dragons)
-May 11: Dragon (Week 2: Mythical Creatures)
-May 12: Unicorn (Week 2: Mythical Creatures)
-May 13: Kitsune (Week 2: Mythical Creatures)
-May 14: Phoenix (Week 2: Mythical Creatures)
-May 15: Golem (Week 2: Mythical Creatures)
-May 16: Kraken (Week 2: Mythical Creatures)
-May 17: Thunderbird (Week 2: Mythical Creatures)
-May 18: Ancient Egypt (Week 3: Eras)
-May 19: Samurai (Week 3: Eras)
-May 20: Renaissance (Week 3: Eras)
-May 21: Victorian (Week 3: Eras)
-May 22: Pirate (Week 3: Eras)
-May 23: 1980's (Week 3: Eras)
-May 24: Post-Apocalyptic (Week 3: Eras)
-May 25: Treasure Hunter (Week 4: Occupations)
-May 26: Beekeeper (Week 4: Occupations)
-May 27: Detective (Week 4: Occupations)
-May 28: Mech Pilot (Week 4: Occupations)
-May 29: Librarian (Week 4: Occupations)
-May 30: Bartender (Week 4: Occupations)
-May 31: Farmer (Week 4: Occupations)
+May 04: Goblin 
+May 05: Orc 
+May 06: Dwarf 
+May 07: Mage 
+May 08: Necromancer 
+May 09: Critical Hit
+May 10: Dungeon     
+May 11: Dragon 
+May 12: Unicorn 
+May 13: Kitsune 
+May 14: Phoenix 
+May 15: Golem 
+May 16: Kraken  
+May 17: Thunderbird 
+May 18: Ancient Egypt 
+May 19: Samurai 
+May 20: Renaissance 
+May 21: Victorian 
+May 22: Pirate  
+May 23: 1980's 
+May 24: Post-Apocalyptic 
+May 25: Treasure Hunter 
+May 26: Beekeeper 
+May 27: Detective 
+May 28: Mech Pilot      
+May 29: Librarian 
+May 30: Bartender 
+May 31: Farmer

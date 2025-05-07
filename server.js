@@ -11,9 +11,14 @@ app.use(express.static('.'));
 
 // Search endpoint
 app.get('/search', (req, res) => {
+  const month = req.query.month;
   const day = req.query.day;
-  const month = 'may';
   const dataDir = path.join(__dirname, 'data', month);
+  
+  // Check if month directory exists
+  if (!fs.existsSync(dataDir)) {
+    return res.json({ error: `No data found for month: ${month}` });
+  }
   
   try {
     // Get all files in the data directory
@@ -27,7 +32,8 @@ app.get('/search', (req, res) => {
     files.forEach(file => {
       try {
         const filePath = path.join(dataDir, file);
-        const grepResult = execSync(`grep ${day} ${filePath}`).toString().trim();
+        const monthName = month.charAt(0).toUpperCase() + month.slice(1);
+        const grepResult = execSync(`grep -i "${monthName} ${day}" ${filePath}`).toString().trim();
         if (grepResult) {
           // Calculate needed tabs (1 tab = 8 spaces)
           const tabsNeeded = Math.max(1, Math.ceil((maxLength - file.length + 4) / 8));

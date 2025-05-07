@@ -11,8 +11,13 @@ body {
 
 .controls {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
+}
+
+.month-controls, .day-controls {
+  display: flex;
+  gap: 10px;
   align-items: center;
 }
 
@@ -20,6 +25,13 @@ body {
   padding: 8px;
   width: 60px;
   text-align: center;
+}
+
+#monthInput {
+  padding: 8px;
+  width: 60px;
+  text-align: center;
+  text-transform: lowercase;
 }
 
 button {
