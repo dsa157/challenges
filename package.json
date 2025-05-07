@@ -1,0 +1,24 @@
+{
+  "name": "challenges",
+  "version": "1.0.0",
+  "description": "a simple tool to grep out the daily art challenge from one or one sites (listed in test files)",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsa157/challenges.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dsa157/challenges/issues"
+  },
+  "homepage": "https://github.com/dsa157/challenges#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
