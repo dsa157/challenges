@@ -3,12 +3,7 @@
   publish = "public"
   functions = "functions"
   base = "/"
-
-[context.production.environment]
-  NODE_VERSION = "18"
-
-[context.deploy-preview.environment]
-  NODE_VERSION = "18"
+  publish = "public"
 
 [[redirects]]
   from = "/api/*"
@@ -19,3 +14,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[context.production.environment]
+  NODE_VERSION = "18"
+  NETLIFY = "true"
+
+[context.deploy-preview.environment]
+  NODE_VERSION = "18"

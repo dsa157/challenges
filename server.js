@@ -7,7 +7,9 @@ const debugError = require('debug')('server:error');
 const serverless = require('serverless-http');
 
 const app = express();
-const DATA_DIR = path.join(__dirname, 'public/data');
+const DATA_DIR = process.env.NETLIFY
+  ? path.join(__dirname, 'public/data')
+  : path.join(__dirname, 'public/data');
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
