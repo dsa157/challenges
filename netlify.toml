@@ -1,9 +1,8 @@
 [build]
-  command = "npm install && npm run build && rm -rf functions/data && cp -r public/data functions/ && ls -R functions/data"
+  command = "npm install && npm run build && mkdir -p functions/data && cp -r public/data/* functions/data/ && ls -lR functions && ls -lR /var/task"
   publish = "public"
   functions = "functions"
   base = "/"
-  include = ["public/data/**"]
 
 [[redirects]]
   from = "/api/*"

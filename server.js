@@ -8,19 +8,57 @@ const serverless = require('serverless-http');
 
 const app = express();
 const DATA_DIR = process.env.NETLIFY
-  ? path.join(__dirname, 'data')
+  ? path.join(process.cwd(), 'data')
   : path.join(__dirname, 'public/data');
 
-console.log('Checking DATA_DIR:', DATA_DIR);
-console.log('Directory exists:', fs.existsSync(DATA_DIR));
-console.log('Directory contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'N/A');
+console.log('NETLIFY Environment:', process.env.NETLIFY);
+console.log('__dirname:', __dirname);
+console.log('process.cwd():', process.cwd());
+console.log('Resolved DATA_DIR:', DATA_DIR);
+
+// Debug deployment paths
+console.log('=== Deployment Path Analysis ===');
+console.log('Process Info:', {
+  cwd: process.cwd(),
+  dirname: __dirname,
+  execPath: process.execPath,
+  argv: process.argv
+});
+
+// List all files recursively from current directory
+const walkDir = (dir) => {
+  const results = [];
+  const list = fs.readdirSync(dir);
+  
+  list.forEach(file => {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat?.isDirectory()) {
+      results.push(...walkDir(fullPath));
+    } else {
+      results.push(fullPath);
+    }
+  });
+  
+  return results;
+};
+
+try {
+  console.log('Directory Tree:', walkDir(process.cwd()));
+} catch (error) {
+  console.error('Directory walk error:', error);
+}
 
 if (!fs.existsSync(DATA_DIR)) {
-  console.error('FATAL: DATA_DIR does not exist:', DATA_DIR);
-  console.error('Current working directory:', process.cwd());
-  console.error('Directory contents:', fs.readdirSync(process.cwd()));
+  console.error('FATAL: Missing data directory');
+  console.error('Attempted path:', DATA_DIR);
+  console.error('Current directory contents:', fs.readdirSync(process.cwd()));
+  console.error('Parent directory contents:', fs.readdirSync(path.dirname(process.cwd())));
   process.exit(1);
 }
+
+console.log('DATA_DIR verified. Contents:', fs.readdirSync(DATA_DIR));
 
 debugData('Using verified data directory: %s', DATA_DIR);
 
