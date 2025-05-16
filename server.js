@@ -8,8 +8,10 @@ const serverless = require('serverless-http');
 
 const app = express();
 const DATA_DIR = process.env.NETLIFY
-  ? path.join(process.cwd(), 'public/data')
+  ? path.join(process.cwd(), 'data')
   : path.join(__dirname, 'public/data');
+
+debugData('Using data directory: %s', DATA_DIR);
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));

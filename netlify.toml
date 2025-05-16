@@ -3,7 +3,10 @@
   publish = "public"
   functions = "functions"
   base = "/"
-  include = ["public/data/**"]
+  include = [
+    "public/data/**",
+    "public/data/*/**"
+  ]
 
 [[redirects]]
   from = "/api/*"
