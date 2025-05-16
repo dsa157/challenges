@@ -3,6 +3,7 @@
   publish = "public"
   functions = "functions"
   base = "/"
+  include = ["public/data/**"]
 
 [[redirects]]
   from = "/api/*"
@@ -17,6 +18,3 @@
 [context.production.environment]
   NODE_VERSION = "18"
   NETLIFY = "true"
-
-[build.include]
-  - "public/data/**"
