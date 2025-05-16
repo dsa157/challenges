@@ -149,92 +149,49 @@ app.use('/api', (err, req, res, next) => {
 });
 
 // Search endpoint
-app.get('/api/search', (req, res) => {
-  const month = req.query.month?.toLowerCase();
-  const day = req.query.day;
-  
-  debug('New request for month: %s, day: %s', month, day);
-  
-  if (!month || !day) {
-    debugError('Missing month or day parameter');
-    return res.status(400).json({ error: 'Both month and day parameters are required' });
-  }
-  
-  const dayNum = parseInt(day);
-  if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
-    debugError('Invalid day parameter: %s', day);
-    return res.status(400).json({ error: 'Day must be between 1 and 31' });
-  }
-  
-  debug('Processing %s request (normalized)', month.toLowerCase());
-  
-  const dataDir = path.join(__dirname, 'public/data');
-  debugData('Data directory contents: %o', fs.readdirSync(dataDir));
-  
+app.get('/api/search', async (req, res) => {
   try {
-    const monthDirs = fs.readdirSync(dataDir).filter(f => {
-      const fullPath = path.join(dataDir, f);
-      return fs.statSync(fullPath).isDirectory() && 
-             f.toLowerCase() === month;
-    });
+    const { month, day } = req.query;
     
-    if (monthDirs.length === 0) {
-      debug('No challenges found for month: %s', month);
-      return res.json({ results: [] });
+    if (!month || !day) {
+      return res.status(400).json({ error: 'Month and day parameters required' });
     }
+
+    // Verify data directory exists
+    if (!fs.existsSync(DATA_DIR)) {
+      throw new Error(`Data directory not found: ${DATA_DIR}`);
+    }
+
+    const monthDir = path.join(DATA_DIR, month);
     
-    const monthDir = path.join(dataDir, monthDirs[0]);
-    debugData('Using month directory: %s', monthDir);
-    
+    // Verify month directory exists
+    if (!fs.existsSync(monthDir)) {
+      return res.status(404).json({ error: 'Month not found' });
+    }
+
+    // Find matching files
     const files = fs.readdirSync(monthDir);
-    debugData('Files in directory: %o', files);
+    const dayPattern = new RegExp(`${day}\\..+\\.txt$`, 'i');
+    const matches = files.filter(file => dayPattern.test(file));
     
-    const txtFiles = files.filter(f => f.endsWith('.txt'));
-    debug('Found %d text files', txtFiles.length);
-    
-    if (txtFiles.length === 0) {
-      debug('No .txt files found in %s directory', monthDirs[0]);
-      return res.json({ results: [] });
-    }
-    
-    const results = [];
-    
-    txtFiles.forEach(file => {
-      const filePath = path.join(monthDir, file);
-      debugData('Reading file: %s', filePath);
-      
-      try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n');
-        const patternStr = `^${monthDirs[0]} ${day.toString().padStart(2, '0')}(:|\\s|$)`;
-        const pattern = new RegExp(patternStr, 'i');
-        debugData('Searching with pattern: %s', patternStr);
-        
-        for (const line of lines) {
-          debugData('Testing line: %s', line);
-          if (pattern.test(line)) {
-            debugData('Matched line: %s', line);
-            const challenge = line.replace(new RegExp(`^${monthDirs[0]} ${day.toString().padStart(2, '0')}(:|\\s)+`, 'i'), '').trim();
-            
-            results.push({
-              source: path.basename(file, '.txt'),
-              date: `${monthDirs[0]} ${day}`,
-              challenge
-            });
-            break;
-          }
-        }
-      } catch (e) {
-        debugError('Error reading file %s: %o', filePath, e);
-      }
+    res.json({ 
+      success: true,
+      matches,
+      dataDir: DATA_DIR,
+      monthDir
     });
-    
-    debug('Returning %d results', results.length);
-    res.json({ results });
-    
   } catch (error) {
-    debugError('Server error: %o', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Search API Error:', {
+      message: error.message,
+      stack: error.stack,
+      query: req.query,
+      dataDir: DATA_DIR,
+      exists: fs.existsSync(DATA_DIR)
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NETLIFY ? 'See server logs' : error.message
+    });
   }
 });
 
