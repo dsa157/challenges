@@ -141,17 +141,23 @@ async function search() {
       statusDiv.textContent = '';
       resultsTable.style.display = 'table';
       data.results.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.source}</td>
-          <td>${item.date}</td>
-          <td>${item.challenge}</td>
-        `;
-        tbody.appendChild(row);
+        const source = item.file.replace('.txt', '');
+        const date = `May ${day}`;
+        
+        item.matches.forEach(challenge => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${source}</td>
+            <td>${date}</td>
+            <td>${challenge}</td>
+          `;
+          tbody.appendChild(row);
+        });
       });
     }
   } catch (error) {
     statusDiv.textContent = `No challenges found for ${month} ${day}`;
+    resultsTable.style.display = 'none';
     console.error('Search error:', error);
   }
 }

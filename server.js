@@ -145,6 +145,20 @@ app.get('/api/version', (req, res) => {
   }
 });
 
+// Add debug route
+app.get('/api/debug', (req, res) => {
+  const dataDir = path.join(__dirname, 'public/data');
+  res.setHeader('Content-Type', 'application/json');
+  res.json({
+    status: 'success',
+    data: {
+      path: dataDir,
+      exists: fs.existsSync(dataDir),
+      mayFiles: fs.existsSync(dataDir) ? fs.readdirSync(path.join(dataDir, 'may')) : []
+    }
+  });
+});
+
 // Ensure all API endpoints return JSON
 app.use('/api', (req, res, next) => {
   res.type('json');
@@ -160,49 +174,24 @@ app.use('/api', (err, req, res, next) => {
 });
 
 // Search endpoint
-app.get('/api/search', async (req, res) => {
+app.get('/api/search', (req, res) => {
+  const { month, day } = req.query;
+  const dayPattern = new RegExp(`May\\s+${day}:`);
+  const dataDir = path.join(__dirname, 'public/data', month);
+  
   try {
-    const { month, day } = req.query;
-    
-    if (!month || !day) {
-      return res.status(400).json({ error: 'Month and day parameters required' });
-    }
+    const results = fs.readdirSync(dataDir).map(file => {
+      const content = fs.readFileSync(path.join(dataDir, file), 'utf-8');
+      const matches = content.split('\n')
+        .filter(line => dayPattern.test(line))
+        .map(line => line.replace(/^May\s+\d+:\s*/, ''));
+      
+      return { file, matches };
+    }).filter(result => result.matches.length > 0);
 
-    // Verify data directory exists
-    if (!fs.existsSync(DATA_DIR)) {
-      throw new Error(`Data directory not found: ${DATA_DIR}`);
-    }
-
-    const monthDir = path.join(DATA_DIR, month);
-    
-    // Verify month directory exists
-    if (!fs.existsSync(monthDir)) {
-      return res.status(404).json({ error: 'Month not found' });
-    }
-
-    // Find matching files
-    const files = fs.readdirSync(monthDir);
-    const dayPattern = new RegExp(`${day}\\..+\\.txt$`, 'i');
-    const matches = files.filter(file => dayPattern.test(file));
-    
-    res.json({ 
-      success: true,
-      matches,
-      dataDir: DATA_DIR,
-      monthDir
-    });
+    res.json({ success: true, results });
   } catch (error) {
-    console.error('Search API Error:', {
-      message: error.message,
-      stack: error.stack,
-      query: req.query,
-      dataDir: DATA_DIR,
-      exists: fs.existsSync(DATA_DIR)
-    });
-    res.status(500).json({ 
-      error: 'Internal server error',
-      details: process.env.NETLIFY ? 'See server logs' : error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 });
 
