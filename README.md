@@ -8,6 +8,24 @@
 ## Usage
 Access API: `GET /search?month=may&day=<day_number>`
 
+## Debugging
+
+Enable debug logging with environment variables:
+
+```bash
+# All debug output
+DEBUG=server* npm start
+
+# Only core server logs
+DEBUG=server npm start
+
+# Only data-related logs
+DEBUG=server:data npm start
+
+# Only error logs
+DEBUG=server:error npm start
+```
+
 ## Deployment
 Configured in `windsurf_deployment.yaml`
 
