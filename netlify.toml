@@ -3,7 +3,6 @@
   publish = "public"
   functions = "functions"
   base = "/"
-  publish = "public"
 
 [[redirects]]
   from = "/api/*"
