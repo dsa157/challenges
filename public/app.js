@@ -8,6 +8,8 @@ const nextDayBtn = document.getElementById('nextDay');
 const statusDiv = document.getElementById('status');
 const resultsTable = document.getElementById('resultsTable');
 const tbody = resultsTable.querySelector('tbody');
+const debugPanel = document.getElementById('debug-panel');
+const debugContent = document.getElementById('debug-content');
 
 // Month names
 const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
@@ -18,7 +20,7 @@ function init() {
   const requiredElements = [
     monthInput, prevMonthBtn, nextMonthBtn,
     dayInput, prevDayBtn, nextDayBtn,
-    statusDiv, resultsTable, tbody
+    statusDiv, resultsTable, tbody, debugPanel, debugContent
   ];
   
   if (requiredElements.some(el => !el)) {
@@ -38,6 +40,15 @@ function init() {
   nextDayBtn.addEventListener('click', () => navigateDay(1));
   monthInput.addEventListener('change', search);
   dayInput.addEventListener('change', search);
+  
+  // Debug panel toggle
+  let debugVisible = false;
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'd' && e.ctrlKey) {
+      debugVisible = !debugVisible;
+      debugPanel.style.display = debugVisible ? 'block' : 'none';
+    }
+  });
   
   // Initial search
   search();
@@ -67,6 +78,34 @@ function updateStatus(message, type = 'neutral') {
   statusDiv.className = `status ${type}`;
 }
 
+// Debug message handler
+function logDebugMessage(message) {
+  const messageElement = document.createElement('div');
+  messageElement.textContent = `[${new Date().toISOString()}] ${message}`;
+  debugContent.appendChild(messageElement);
+  debugContent.scrollTop = debugContent.scrollHeight;
+}
+
+// Modify fetch calls to log debug info
+async function fetchWithDebug(url, options) {
+  logDebugMessage(`Requesting: ${url}`);
+  try {
+    const startTime = Date.now();
+    const response = await fetch(url, options);
+    const duration = Date.now() - startTime;
+    
+    logDebugMessage(`Response: ${response.status} (${duration}ms)`);
+    if (!response.ok) {
+      logDebugMessage(`Error: ${response.statusText}`);
+    }
+    
+    return response;
+  } catch (error) {
+    logDebugMessage(`Fetch error: ${error.message}`);
+    throw error;
+  }
+}
+
 // Perform search
 async function search() {
   const month = monthInput.value.toLowerCase();
@@ -76,7 +115,7 @@ async function search() {
   tbody.innerHTML = '';
   
   try {
-    const response = await fetch(`/search?month=${month}&day=${day}`);
+    const response = await fetchWithDebug(`/search?month=${month}&day=${day}`);
     const data = await response.json();
     
     if (!response.ok) {
