@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build && rm -rf src/functions/data && mkdir -p src/functions/data && cp -r public/data/. src/functions/data/"
+  command = "npm install && npm run build && mkdir -p src/functions && echo 'Copying data...' && rm -rf src/functions/data && cp -rv public/data src/functions/ && echo 'Verifying data copy...' && ls -la src/functions/data"
   publish = "public"
   functions = "functions"
   base = "/"
