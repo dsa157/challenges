@@ -1,12 +1,9 @@
 [build]
-  command = "npm install && npm run build"
+  command = "npm install && npm run build && ln -sf ../public/data functions/data"
   publish = "public"
   functions = "functions"
   base = "/"
-  include = [
-    "public/data/**",
-    "public/data/*/**"
-  ]
+  include = ["public/data/**"]
 
 [[redirects]]
   from = "/api/*"

@@ -8,7 +8,7 @@ const serverless = require('serverless-http');
 
 const app = express();
 const DATA_DIR = process.env.NETLIFY
-  ? path.join(process.cwd(), '..', 'public/data')
+  ? path.join(__dirname, 'data')
   : path.join(__dirname, 'public/data');
 
 debugData('Using data directory: %s (exists: %s)', DATA_DIR, fs.existsSync(DATA_DIR));
