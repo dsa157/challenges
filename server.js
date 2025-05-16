@@ -11,8 +11,14 @@ const DATA_DIR = process.env.NETLIFY
   ? path.join(__dirname, 'data')
   : path.join(__dirname, 'public/data');
 
+console.log('Checking DATA_DIR:', DATA_DIR);
+console.log('Directory exists:', fs.existsSync(DATA_DIR));
+console.log('Directory contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'N/A');
+
 if (!fs.existsSync(DATA_DIR)) {
-  console.error('DATA_DIR does not exist:', DATA_DIR);
+  console.error('FATAL: DATA_DIR does not exist:', DATA_DIR);
+  console.error('Current working directory:', process.cwd());
+  console.error('Directory contents:', fs.readdirSync(process.cwd()));
   process.exit(1);
 }
 
