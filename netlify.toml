@@ -1,8 +1,18 @@
 [build]
-  command = "npm install && npm run build && mkdir -p functions/data && cp -r public/data/* functions/data/ && ls -lR functions && ls -lR /var/task"
+  command = "npm install && npm run build && mkdir -p functions/data && cp -r public/data/* functions/data/"
   publish = "public"
   functions = "functions"
   base = "/"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[context.production.environment]
+  NODE_VERSION = "18"
+  NETLIFY = "true"
+
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
 
 [[redirects]]
   from = "/api/*"
@@ -13,7 +23,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-[context.production.environment]
-  NODE_VERSION = "18"
-  NETLIFY = "true"
