@@ -1,7 +1,14 @@
 [build]
-  command = "npm install"
+  command = "npm install && npm run build"
   publish = "."
   functions = "functions"
+  base = "/"
+
+[context.production.environment]
+  NODE_VERSION = "18"
+
+[context.deploy-preview.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"
