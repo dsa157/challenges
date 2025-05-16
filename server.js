@@ -10,19 +10,21 @@ const app = express();
 
 // Flexible Netlify data directory resolution
 const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
-  ? path.join(__dirname, 'data') // Now relative to function
+  ? path.join(__dirname, '../data') // /var/task/src/functions/data
   : path.join(__dirname, 'public/data');
 
-console.log('Netlify data directory resolved to:', DATA_DIR);
+console.log('Resolved DATA_DIR:', DATA_DIR);
 console.log('Directory exists:', fs.existsSync(DATA_DIR));
+console.log('Directory contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'Missing');
 
 if (!fs.existsSync(DATA_DIR)) {
   console.error('FATAL: Missing data directory');
-  console.error('Current directory contents:', fs.readdirSync(__dirname));
+  console.error('Current working directory:', process.cwd());
+  console.error('__dirname:', __dirname);
   process.exit(1);
 }
 
-console.log('DATA_DIR verified. Contents:', fs.readdirSync(DATA_DIR));
+console.log('DATA_DIR verified. Contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'Missing');
 
 debugData('Using verified data directory: %s', DATA_DIR);
 
