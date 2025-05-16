@@ -7,18 +7,14 @@ const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(express.static('.'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Search endpoint
 app.get('/search', (req, res) => {
   const month = req.query.month;
   const day = req.query.day;
-  const dataDir = path.join(process.cwd(), 'data', month);
-
-  // Ensure data directory exists in deployment
-  if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
-    fs.mkdirSync(path.join(process.cwd(), 'data'), { recursive: true });
-  }
+  const dataDir = path.join(__dirname, 'data', month);
 
   // Check if month directory exists
   if (!fs.existsSync(dataDir)) {
