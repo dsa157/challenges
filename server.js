@@ -117,6 +117,25 @@ app.get('/api/deployment-check', (req, res) => {
   }
 });
 
+// Version endpoint
+app.get('/api/version', (req, res) => {
+  try {
+    const versionInfo = require('./version.json');
+    res.json(versionInfo);
+  } catch {
+    res.json({
+      version: new Date().toISOString(),
+      message: 'Fallback version (version.json not found)'
+    });
+  }
+});
+
+// Ensure all API endpoints return JSON
+app.use('/api', (req, res, next) => {
+  res.type('json');
+  next();
+});
+
 // Search endpoint
 app.get('/api/search', (req, res) => {
   const month = req.query.month?.toLowerCase();

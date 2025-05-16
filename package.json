@@ -1,12 +1,13 @@
 {
   "type": "commonjs",
   "name": "challenges",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a simple tool to grep out the daily art challenge from one or one sites (listed in test files)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js public",
+    "prebuild": "node -e 'fs.writeFileSync(\"version.json\", JSON.stringify({version: new Date().toISOString()}))'",
     "build": "echo 'Build complete'",
+    "start": "node server.js public",
     "restart": "npm stop --if-present && npm start",
     "test": "jest"
   },
