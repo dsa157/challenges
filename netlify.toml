@@ -20,3 +20,21 @@
 
 [context.deploy-preview.environment]
   NODE_VERSION = "18"
+
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
+
+[[plugins]]
+package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[build.edge_handlers]
+  directory = "edge-handlers"
+
+[build.processing]
+  skip_processing = true
+
+[build.include]
+  - "public/data/**"
