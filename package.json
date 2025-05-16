@@ -6,8 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "build": "mkdir -p public && cp -r data public/ && cp *.html public/ && cp *.css public/ && cp app.js public/",
+    "build": "echo 'Build complete'",
+    "restart": "npm stop --if-present && npm start",
     "test": "jest"
   },
   "repository": {
