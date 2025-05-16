@@ -13,18 +13,19 @@ const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
   ? path.join(__dirname, '../data') // /var/task/src/functions/data
   : path.join(__dirname, 'public/data');
 
-console.log('Resolved DATA_DIR:', DATA_DIR);
-console.log('Directory exists:', fs.existsSync(DATA_DIR));
-console.log('Directory contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'Missing');
-
+// Create directory if missing
 if (!fs.existsSync(DATA_DIR)) {
-  console.error('FATAL: Missing data directory');
-  console.error('Current working directory:', process.cwd());
-  console.error('__dirname:', __dirname);
-  process.exit(1);
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    console.log('Created data directory at:', DATA_DIR);
+  } catch (err) {
+    console.error('Failed to create data directory:', err);
+    process.exit(1);
+  }
 }
 
-console.log('DATA_DIR verified. Contents:', fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : 'Missing');
+console.log('Using data directory:', DATA_DIR);
+console.log('Directory contents:', fs.readdirSync(DATA_DIR));
 
 debugData('Using verified data directory: %s', DATA_DIR);
 

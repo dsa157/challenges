@@ -1,11 +1,21 @@
 [build]
-  command = "npm install && npm run build"
+  command = """
+    npm install && 
+    npm run build && 
+    rm -rf src/data && 
+    mkdir -p src/data && 
+    cp -r public/data/* src/data/ && 
+    echo "Data directory prepared: $(ls src/data)"
+  """
   publish = "public"
   functions = "src/functions"
   base = "/"
 
 [functions]
-  included_files = ["public/data/**"]
+  included_files = [
+    "public/data/**",
+    "src/data/**"
+  ]
   node_bundler = "esbuild"
 
 [build.environment]
