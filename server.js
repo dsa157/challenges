@@ -230,3 +230,12 @@ app.listen(3000, () => {
   debug('Server started');
   debugData('Data directory: %s', DATA_DIR);
 });
+
+module.exports = app;
+module.exports.handler = async (event, context) => {
+  return new Promise((resolve) => {
+    app(event, context, (error, result) => {
+      resolve(result);
+    });
+  });
+};
