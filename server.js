@@ -11,6 +11,12 @@ const DATA_DIR = path.join(__dirname, 'public/data');
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Ensure all responses are JSON
+app.use((req, res, next) => {
+  res.set('Content-Type', 'application/json');
+  next();
+});
+
 // Test file endpoint
 app.get('/test-file', (req, res) => {
   const testFile = path.join(__dirname, 'public/data/May/mermay.txt');
@@ -26,7 +32,7 @@ app.get('/test-file', (req, res) => {
     }
     
     const content = fs.readFileSync(testFile, 'utf8');
-    res.send(`<pre>${content}</pre>`);
+    res.json({ content });
   } catch (e) {
     debugError('Error reading file %s: %o', testFile, e);
     res.status(500).json({
@@ -40,20 +46,17 @@ app.get('/test-file', (req, res) => {
 app.get('/test', (req, res) => {
   const testFile = path.join(__dirname, 'public/data/May/mermay.txt');
   
-  // Verify file exists
-  if (!fs.existsSync(testFile)) {
-    debugError('Test file not found: %s', testFile);
-    return res.status(500).json({
-      error: 'Test file not found',
-      path: testFile,
-      absolutePath: path.resolve(testFile)
-    });
-  }
-  
-  // Read and return raw content
   try {
+    if (!fs.existsSync(testFile)) {
+      debugError('Test file not found: %s', testFile);
+      return res.status(404).json({
+        error: 'Test file not found',
+        path: testFile
+      });
+    }
+    
     const content = fs.readFileSync(testFile, 'utf8');
-    res.send(`<pre>${content}</pre>`);
+    res.json({ content });
   } catch (e) {
     debugError('Error reading file %s: %o', testFile, e);
     res.status(500).json({
@@ -63,13 +66,13 @@ app.get('/test', (req, res) => {
   }
 });
 
-// Debug endpoint - returns raw file content
+// Debug endpoint
 app.get('/debug-file', (req, res) => {
   const filePath = path.join(DATA_DIR, 'May/mermay.txt');
   debugData('Reading file: %s', filePath);
   try {
     const content = fs.readFileSync(filePath, 'utf8');
-    res.send(`<pre>${content}</pre>`);
+    res.json({ content });
   } catch (e) {
     debugError('Error reading file %s: %o', filePath, e);
     res.status(500).json({
