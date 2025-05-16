@@ -57,11 +57,11 @@ function init() {
   fetch('/api/version')
     .then(response => response.json())
     .then(data => {
-      document.title = `Challenge Finder v${data.version.split('T')[0]}`;
-      const versionEl = document.createElement('div');
-      versionEl.className = 'version';
-      versionEl.textContent = `Version: ${data.version}`;
-      document.body.appendChild(versionEl);
+      const date = new Date(data.version);
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+      document.title = `Challenge Finder v${formattedDate}`;
+      const versionEl = document.getElementById('version');
+      versionEl.textContent = `v${formattedDate}`;
     })
     .catch(console.error);
 }

@@ -18,7 +18,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     input, button {
       padding: 8px;
@@ -62,28 +62,65 @@
     .version {
       color: #666;
       font-size: 0.8em;
-      margin-top: 10px;
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+    .input-with-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    label {
+      display: inline-block;
+      width: 50px;
+      text-align: right;
+      margin-right: 10px;
+    }
+    .month-input, .day-input {
+      width: 80px;
+      padding: 8px;
+      font-size: 16px;
+    }
+    #debug-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 150px;
+      overflow-y: auto;
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      font-family: monospace;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Challenge Finder <span id="version" class="version"></span></h1>
+  <h1>Challenge Finder</h1>
+  <div id="version" class="version"></div>
   
   <div class="search-container">
     <div class="input-group">
-      <button id="prevMonth" class="nav-button">&lt;</button>
-      <input type="text" id="monthInput" placeholder="Month (e.g. May)">
-      <button id="nextMonth" class="nav-button">&gt;</button>
+      <label for="monthInput">Month</label>
+      <div class="input-with-buttons">
+        <button id="prevMonth" class="nav-button">◀</button>
+        <input type="text" id="monthInput" class="month-input">
+        <button id="nextMonth" class="nav-button">▶</button>
+      </div>
     </div>
     
     <div class="input-group">
-      <button id="prevDay" class="nav-button">&lt;</button>
-      <input type="number" id="dayInput" placeholder="Day (1-31)" min="1" max="31">
-      <button id="nextDay" class="nav-button">&gt;</button>
+      <label for="dayInput">Day</label>
+      <div class="input-with-buttons">
+        <button id="prevDay" class="nav-button">◀</button>
+        <input type="number" id="dayInput" min="1" max="31" class="day-input">
+        <button id="nextDay" class="nav-button">▶</button>
+      </div>
     </div>
   </div>
   
-  <div id="status" class="status"></div>
+  <div id="status" class="status neutral"></div>
   
   <table id="resultsTable">
     <thead>
@@ -96,8 +133,8 @@
     <tbody></tbody>
   </table>
   
-  <div id="debug-panel" style="position:fixed; bottom:0; left:0; right:0; height:150px; overflow-y:auto; background:#111; color:#0f0; padding:10px; font-family:monospace; display:none;">
-    <h3 style="color:#fff; margin-top:0;">Server Debug Log</h3>
+  <div id="debug-panel">
+    <h3>Debug Console</h3>
     <div id="debug-content"></div>
   </div>
   
@@ -107,9 +144,11 @@
     fetch('/api/version')
       .then(response => response.json())
       .then(data => {
-        document.title = `Challenge Finder v${data.version.split('T')[0]}`;
+        const date = new Date(data.version);
+        const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+        document.title = `Challenge Finder v${formattedDate}`;
         const versionEl = document.getElementById('version');
-        versionEl.textContent = `v${data.version.split('T')[0]}`;
+        versionEl.textContent = `v${formattedDate}`;
       })
       .catch(console.error);
   </script>
