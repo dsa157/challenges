@@ -11,6 +11,13 @@ const DATA_DIR = process.env.NETLIFY
   ? path.join(__dirname, 'data')
   : path.join(__dirname, 'public/data');
 
+if (!fs.existsSync(DATA_DIR)) {
+  console.error('DATA_DIR does not exist:', DATA_DIR);
+  process.exit(1);
+}
+
+debugData('Using verified data directory: %s', DATA_DIR);
+
 debugData('Using data directory: %s (exists: %s)', DATA_DIR, fs.existsSync(DATA_DIR));
 
 // Middleware
