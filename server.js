@@ -7,8 +7,30 @@ const debugError = require('debug')('server:error');
 const serverless = require('serverless-http');
 
 const app = express();
+
+// Flexible Netlify data directory resolution
+const getNetlifyDataDir = () => {
+  const possiblePaths = [
+    path.join(process.cwd(), 'functions/data'),
+    path.join(process.cwd(), 'src/functions/data')
+  ];
+  
+  for (const dataPath of possiblePaths) {
+    try {
+      if (fs.existsSync(dataPath)) {
+        console.log('Found data directory at:', dataPath);
+        return dataPath;
+      }
+      console.log('Data directory not found at:', dataPath);
+    } catch (err) {
+      console.log('Error checking path:', dataPath, err.message);
+    }
+  }
+  return possiblePaths[0]; // Default to first path if none exist
+};
+
 const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
-  ? path.join(process.cwd(), 'functions/data')
+  ? getNetlifyDataDir()
   : path.join(__dirname, 'public/data');
 
 console.log('AWS_LAMBDA_FUNCTION_NAME:', process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -71,22 +93,16 @@ try {
 // Verify data directory
 console.log('=== Data Directory Verification ===');
 
-// Log functions directory structure if on Netlify
 if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  const functionsDir = path.join(process.cwd(), 'functions');
+  console.log('Checking possible function locations...');
+  const functionsPath = path.dirname(DATA_DIR);
+  console.log('Resolved functions path:', functionsPath);
+  
   try {
-    console.log('Functions directory structure:\n' + getDirectoryTree(functionsDir));
-    
-    // Verify data directory was created
-    const dataDir = path.join(functionsDir, 'data');
-    if (fs.existsSync(dataDir)) {
-      console.log('✅ Data directory exists at:', dataDir);
-      console.log('Data directory contents:', fs.readdirSync(dataDir));
-    } else {
-      console.error('❌ Data directory missing at:', dataDir);
-    }
+    console.log('Directory structure:', getDirectoryTree(functionsPath));
+    console.log('Data directory contents:', fs.readdirSync(DATA_DIR));
   } catch (err) {
-    console.error('Error scanning functions directory:', err);
+    console.error('Directory verification failed:', err);
   }
 }
 
