@@ -13,8 +13,13 @@ app.use(express.static('.'));
 app.get('/search', (req, res) => {
   const month = req.query.month;
   const day = req.query.day;
-  const dataDir = path.join(__dirname, 'data', month);
-  
+  const dataDir = path.join(process.cwd(), 'data', month);
+
+  // Ensure data directory exists in deployment
+  if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
+    fs.mkdirSync(path.join(process.cwd(), 'data'), { recursive: true });
+  }
+
   // Check if month directory exists
   if (!fs.existsSync(dataDir)) {
     return res.json({ error: `No data found for month: ${month}` });
