@@ -22,6 +22,9 @@
     "url": "https://github.com/dsa157/challenges/issues"
   },
   "homepage": "https://github.com/dsa157/challenges#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "debug": "^4.3.4",
     "express": "^4.18.2",
