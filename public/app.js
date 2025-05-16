@@ -67,73 +67,41 @@ function updateStatus(message, type = 'neutral') {
   statusDiv.className = `status ${type}`;
 }
 
-// Display search results
-function displayResults(results) {
-  tbody.innerHTML = '';
-  
-  if (!results || results.length === 0) {
-    resultsTable.style.display = 'none';
-    updateStatus('No challenges found for this date', 'neutral');
-    return;
-  }
-  
-  resultsTable.style.display = 'table';
-  updateStatus(`Found ${results.length} challenges`, 'neutral');
-  
-  results.forEach(item => {
-    const row = document.createElement('tr');
-    
-    const sourceCell = document.createElement('td');
-    sourceCell.textContent = item.source;
-    
-    const dateCell = document.createElement('td');
-    dateCell.textContent = item.date;
-    
-    const challengeCell = document.createElement('td');
-    challengeCell.textContent = item.challenge;
-    
-    row.append(sourceCell, dateCell, challengeCell);
-    tbody.appendChild(row);
-  });
-}
-
 // Perform search
 async function search() {
-  const month = monthInput.value.trim().toLowerCase();
-  const day = parseInt(dayInput.value);
+  const month = monthInput.value.toLowerCase();
+  const day = dayInput.value;
   
-  if (!month || isNaN(day) || day < 1 || day > 31) {
-    resultsTable.style.display = 'none';
-    updateStatus('Please enter valid month and day (1-31)', 'error');
-    return;
-  }
-  
-  const dayStr = day < 10 ? `0${day}` : `${day}`;
-  const url = `/search?month=${month}&day=${dayStr}`;
-  
-  updateStatus('Searching...', 'loading');
-  resultsTable.style.display = 'none';
+  statusDiv.textContent = 'Searching...';
   tbody.innerHTML = '';
   
   try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-    
+    const response = await fetch(`/search?month=${month}&day=${day}`);
     const data = await response.json();
     
-    if (!data) {
-      throw new Error('No data received');
+    if (!response.ok) {
+      throw new Error(data.error || 'Search failed');
     }
     
-    const results = Array.isArray(data) ? data : data.results || [];
-    displayResults(results);
+    if (data.results.length === 0) {
+      statusDiv.textContent = `No challenges found for ${month} ${day}`;
+      resultsTable.style.display = 'none';
+    } else {
+      statusDiv.textContent = '';
+      resultsTable.style.display = 'table';
+      data.results.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.source}</td>
+          <td>${item.date}</td>
+          <td>${item.challenge}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
   } catch (error) {
-    console.error('Search failed:', error);
-    resultsTable.style.display = 'none';
-    updateStatus(`Search failed: ${error.message}`, 'error');
+    statusDiv.textContent = `No challenges found for ${month} ${day}`;
+    console.error('Search error:', error);
   }
 }
 
