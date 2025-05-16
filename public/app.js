@@ -52,6 +52,18 @@ function init() {
   
   // Initial search
   search();
+  
+  // Fetch and display version
+  fetch('/api/version')
+    .then(response => response.json())
+    .then(data => {
+      document.title = `Challenge Finder v${data.version.split('T')[0]}`;
+      const versionEl = document.createElement('div');
+      versionEl.className = 'version';
+      versionEl.textContent = `Version: ${data.version}`;
+      document.body.appendChild(versionEl);
+    })
+    .catch(console.error);
 }
 
 // Navigate months (wrapping around)
@@ -115,7 +127,7 @@ async function search() {
   tbody.innerHTML = '';
   
   try {
-    const response = await fetchWithDebug(`/search?month=${month}&day=${day}`);
+    const response = await fetchWithDebug(`/api/search?month=${month}&day=${day}`);
     const data = await response.json();
     
     if (!response.ok) {
