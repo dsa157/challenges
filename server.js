@@ -80,6 +80,43 @@ app.get('/debug-file', (req, res) => {
   }
 });
 
+// Deployment verification endpoint
+app.get('/deployment-check', (req, res) => {
+  try {
+    const months = fs.readdirSync(DATA_DIR).filter(f => {
+      return fs.statSync(path.join(DATA_DIR, f)).isDirectory();
+    });
+    
+    const checks = months.map(month => {
+      const monthPath = path.join(DATA_DIR, month);
+      const files = fs.readdirSync(monthPath);
+      const txtFiles = files.filter(f => f.endsWith('.txt'));
+      
+      return {
+        month,
+        path: monthPath,
+        fileCount: txtFiles.length,
+        sampleFile: txtFiles[0] || null
+      };
+    });
+    
+    res.json({
+      status: 'ok',
+      dataDir: DATA_DIR,
+      exists: fs.existsSync(DATA_DIR),
+      months: checks
+    });
+  } catch (e) {
+    debugError('Deployment check failed: %o', e);
+    res.status(500).json({
+      status: 'error',
+      error: e.message,
+      dataDir: DATA_DIR,
+      exists: fs.existsSync(DATA_DIR)
+    });
+  }
+});
+
 // Search endpoint
 app.get('/search', (req, res) => {
   const month = req.query.month?.toLowerCase();
