@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build && mkdir -p src/functions && echo 'Copying data...' && rm -rf src/functions/data && cp -rv public/data src/functions/ && echo 'Verifying data copy...' && ls -la src/functions/data"
+  command = "npm install && npm run build"
   publish = "public"
   functions = "functions"
   base = "/"
@@ -23,3 +23,8 @@ package = "@netlify/plugin-functions-install-core"
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[functions]]
+  directory = "functions"
+  node_bundler = "esbuild"
+  included_files = ["public/data/**"]

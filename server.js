@@ -9,109 +9,16 @@ const serverless = require('serverless-http');
 const app = express();
 
 // Flexible Netlify data directory resolution
-const getNetlifyDataDir = () => {
-  const possiblePaths = [
-    path.join(process.cwd(), 'functions/data'),
-    path.join(process.cwd(), 'src/functions/data')
-  ];
-  
-  for (const dataPath of possiblePaths) {
-    try {
-      if (fs.existsSync(dataPath)) {
-        console.log('Found data directory at:', dataPath);
-        return dataPath;
-      }
-      console.log('Data directory not found at:', dataPath);
-    } catch (err) {
-      console.log('Error checking path:', dataPath, err.message);
-    }
-  }
-  return possiblePaths[0]; // Default to first path if none exist
-};
-
 const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
-  ? getNetlifyDataDir()
+  ? path.join(__dirname, 'data') // Now relative to function
   : path.join(__dirname, 'public/data');
 
-console.log('AWS_LAMBDA_FUNCTION_NAME:', process.env.AWS_LAMBDA_FUNCTION_NAME);
-console.log('__dirname:', __dirname);
-console.log('process.cwd():', process.cwd());
-console.log('Resolved DATA_DIR:', DATA_DIR);
+console.log('Netlify data directory resolved to:', DATA_DIR);
+console.log('Directory exists:', fs.existsSync(DATA_DIR));
 
-// Debug deployment paths
-console.log('=== Deployment Path Analysis ===');
-console.log('Process Info:', {
-  cwd: process.cwd(),
-  dirname: __dirname,
-  execPath: process.execPath,
-  argv: process.argv
-});
-
-// Debug directory structure
-const getDirectoryTree = (dir, prefix = '') => {
-  const files = fs.readdirSync(dir).filter(file => file !== 'node_modules');
-  let tree = '';
-  
-  files.forEach((file, index) => {
-    const path = `${dir}/${file}`;
-    const isLast = index === files.length - 1;
-    tree += `${prefix}${isLast ? '└──' : '├──'} ${file}\n`;
-    
-    if (fs.statSync(path).isDirectory() && file !== 'node_modules') {
-      tree += getDirectoryTree(path, `${prefix}${isLast ? '    ' : '│   '}`);
-    }
-  });
-  
-  return tree;
-};
-
-// List all files recursively from current directory (excluding node_modules)
-const walkDir = (dir) => {
-  const results = [];
-  const list = fs.readdirSync(dir).filter(file => file !== 'node_modules');
-  
-  list.forEach(file => {
-    const fullPath = path.join(dir, file);
-    const stat = fs.statSync(fullPath);
-    
-    if (stat.isDirectory() && file !== 'node_modules') {
-      results.push(...walkDir(fullPath));
-    } else {
-      results.push(fullPath);
-    }
-  });
-  
-  return results;
-};
-
-try {
-  console.log('Directory Tree:', walkDir(process.cwd()));
-} catch (error) {
-  console.error('Directory walk error:', error);
-}
-
-// Verify data directory
-console.log('=== Data Directory Verification ===');
-
-if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  console.log('Checking possible function locations...');
-  const functionsPath = path.dirname(DATA_DIR);
-  console.log('Resolved functions path:', functionsPath);
-  
-  try {
-    console.log('Directory structure:', getDirectoryTree(functionsPath));
-    console.log('Data directory contents:', fs.readdirSync(DATA_DIR));
-  } catch (err) {
-    console.error('Directory verification failed:', err);
-  }
-}
-
-// Original verification
 if (!fs.existsSync(DATA_DIR)) {
   console.error('FATAL: Missing data directory');
-  console.error('Attempted path:', DATA_DIR);
-  console.error('Current directory contents:', fs.readdirSync(process.cwd()));
-  console.error('Parent directory contents:', fs.readdirSync(path.dirname(process.cwd())));
+  console.error('Current directory contents:', fs.readdirSync(__dirname));
   process.exit(1);
 }
 
