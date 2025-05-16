@@ -25,16 +25,34 @@ console.log('Process Info:', {
   argv: process.argv
 });
 
-// List all files recursively from current directory
+// Debug directory structure
+const getDirectoryTree = (dir, prefix = '') => {
+  const files = fs.readdirSync(dir).filter(file => file !== 'node_modules');
+  let tree = '';
+  
+  files.forEach((file, index) => {
+    const path = `${dir}/${file}`;
+    const isLast = index === files.length - 1;
+    tree += `${prefix}${isLast ? '└──' : '├──'} ${file}\n`;
+    
+    if (fs.statSync(path).isDirectory() && file !== 'node_modules') {
+      tree += getDirectoryTree(path, `${prefix}${isLast ? '    ' : '│   '}`);
+    }
+  });
+  
+  return tree;
+};
+
+// List all files recursively from current directory (excluding node_modules)
 const walkDir = (dir) => {
   const results = [];
-  const list = fs.readdirSync(dir);
+  const list = fs.readdirSync(dir).filter(file => file !== 'node_modules');
   
   list.forEach(file => {
     const fullPath = path.join(dir, file);
     const stat = fs.statSync(fullPath);
     
-    if (stat?.isDirectory()) {
+    if (stat.isDirectory() && file !== 'node_modules') {
       results.push(...walkDir(fullPath));
     } else {
       results.push(fullPath);
@@ -50,6 +68,29 @@ try {
   console.error('Directory walk error:', error);
 }
 
+// Verify data directory
+console.log('=== Data Directory Verification ===');
+
+// Log functions directory structure if on Netlify
+if (process.env.NETLIFY) {
+  const functionsDir = path.join(process.cwd(), 'functions');
+  try {
+    console.log('Functions directory structure:\n' + getDirectoryTree(functionsDir));
+    
+    // Verify data directory was created
+    const dataDir = path.join(functionsDir, 'data');
+    if (fs.existsSync(dataDir)) {
+      console.log('✅ Data directory exists at:', dataDir);
+      console.log('Data directory contents:', fs.readdirSync(dataDir));
+    } else {
+      console.error('❌ Data directory missing at:', dataDir);
+    }
+  } catch (err) {
+    console.error('Error scanning functions directory:', err);
+  }
+}
+
+// Original verification
 if (!fs.existsSync(DATA_DIR)) {
   console.error('FATAL: Missing data directory');
   console.error('Attempted path:', DATA_DIR);
