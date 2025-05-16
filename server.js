@@ -8,7 +8,7 @@ const serverless = require('serverless-http');
 
 const app = express();
 const DATA_DIR = process.env.NETLIFY
-  ? path.join(process.cwd(), 'data')
+  ? path.join(process.cwd(), 'functions/data')
   : path.join(__dirname, 'public/data');
 
 console.log('NETLIFY Environment:', process.env.NETLIFY);
