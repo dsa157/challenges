@@ -4,6 +4,7 @@ const fs = require('fs');
 const debug = require('debug')('server');
 const debugData = require('debug')('server:data');
 const debugError = require('debug')('server:error');
+const serverless = require('serverless-http');
 
 const app = express();
 const DATA_DIR = path.join(__dirname, 'public/data');
@@ -232,10 +233,4 @@ app.listen(3000, () => {
 });
 
 module.exports = app;
-module.exports.handler = async (event, context) => {
-  return new Promise((resolve) => {
-    app(event, context, (error, result) => {
-      resolve(result);
-    });
-  });
-};
+module.exports.handler = serverless(app);
