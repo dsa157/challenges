@@ -7,10 +7,12 @@ framework: node
 node_settings:
   start_command: "node server.js public"
   should_create_server: true
+  routes:
+    - path: /*
+      handler: node_server
 
 # Required files to include
 include:
   - "public/data/**"
   - "server.js"
   - "package.json"
-  - "package-lock.json"
