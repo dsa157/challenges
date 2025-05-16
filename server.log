@@ -1,0 +1,77 @@
+Server started
+Data directory: /Users/dsa157/Development/challenges/public/data
+Search request: [Object: null prototype] { month: 'may', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'apr', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'mar', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'apr', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'may', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'may', day: '17' }
+Found results: [
+  { source: 'mermay', date: 'May 17', challenge: '#Eccentric' },
+  { source: 'monai', date: 'May 17', challenge: 'At the Races' },
+  { source: 'nick', date: 'May 17', challenge: 'Thunderbird' }
+]
+Search request: [Object: null prototype] { month: 'may', day: '16' }
+Found results: [
+  { source: 'mermay', date: 'May 16', challenge: '#BeachGoth' },
+  {
+    source: 'monai',
+    date: 'May 16',
+    challenge: "School's out for the summer"
+  },
+  { source: 'nick', date: 'May 16', challenge: 'Kraken' }
+]
+Search request: [Object: null prototype] { month: 'may', day: '1' }
+Found results: []
+Search request: [Object: null prototype] { month: 'april', day: '1' }
+Found results: []
+Search request: [Object: null prototype] { month: 'may' }
+Search request: [Object: null prototype] { month: 'may', day: '1' }
+Found results: []
+Search request: [Object: null prototype] { month: 'may', day: '1' }
+Found results: []

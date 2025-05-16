@@ -4,3 +4,8 @@
 project_id: 2616549f-637a-4ea1-946e-385ab65d1a0c
 # The framework of the web application (examples: nextjs, react, vue, etc.)
 framework: nodejs
+staticDir: public
+buildCommand: npm run build
+startCommand: npm start
+environment:
+  - NODE_ENV=production
