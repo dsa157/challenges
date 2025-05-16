@@ -7,11 +7,11 @@ const debugError = require('debug')('server:error');
 const serverless = require('serverless-http');
 
 const app = express();
-const DATA_DIR = process.env.NETLIFY
+const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
   ? path.join(process.cwd(), 'functions/data')
   : path.join(__dirname, 'public/data');
 
-console.log('NETLIFY Environment:', process.env.NETLIFY);
+console.log('AWS_LAMBDA_FUNCTION_NAME:', process.env.AWS_LAMBDA_FUNCTION_NAME);
 console.log('__dirname:', __dirname);
 console.log('process.cwd():', process.cwd());
 console.log('Resolved DATA_DIR:', DATA_DIR);
@@ -72,7 +72,7 @@ try {
 console.log('=== Data Directory Verification ===');
 
 // Log functions directory structure if on Netlify
-if (process.env.NETLIFY) {
+if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
   const functionsDir = path.join(process.cwd(), 'functions');
   try {
     console.log('Functions directory structure:\n' + getDirectoryTree(functionsDir));
