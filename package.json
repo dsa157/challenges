@@ -5,7 +5,7 @@
   "description": "a simple tool to grep out the daily art challenge from one or one sites (listed in test files)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server.js public",
     "build": "echo 'Build complete'",
     "restart": "npm stop --if-present && npm start",
     "test": "jest"
