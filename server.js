@@ -87,32 +87,21 @@ app.get('/api/deployment-check', (req, res) => {
       return fs.statSync(path.join(DATA_DIR, f)).isDirectory();
     });
     
-    const checks = months.map(month => {
-      const monthPath = path.join(DATA_DIR, month);
-      const files = fs.readdirSync(monthPath);
-      const txtFiles = files.filter(f => f.endsWith('.txt'));
-      
-      return {
-        month,
-        path: monthPath,
-        fileCount: txtFiles.length,
-        sampleFile: txtFiles[0] || null
-      };
-    });
+    const checks = months.map(month => ({
+      month,
+      path: path.join(DATA_DIR, month),
+      fileCount: fs.readdirSync(path.join(DATA_DIR, month)).filter(f => f.endsWith('.txt')).length
+    }));
     
     res.json({
       status: 'ok',
       dataDir: DATA_DIR,
-      exists: fs.existsSync(DATA_DIR),
       months: checks
     });
   } catch (e) {
-    debugError('Deployment check failed: %o', e);
     res.status(500).json({
       status: 'error',
-      error: e.message,
-      dataDir: DATA_DIR,
-      exists: fs.existsSync(DATA_DIR)
+      error: e.message
     });
   }
 });
@@ -134,6 +123,14 @@ app.get('/api/version', (req, res) => {
 app.use('/api', (req, res, next) => {
   res.type('json');
   next();
+});
+
+// Error handler for API routes
+app.use('/api', (err, req, res, next) => {
+  res.status(500).json({
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 // Search endpoint
@@ -163,7 +160,7 @@ app.get('/api/search', (req, res) => {
     const monthDirs = fs.readdirSync(dataDir).filter(f => {
       const fullPath = path.join(dataDir, f);
       return fs.statSync(fullPath).isDirectory() && 
-             f.toLowerCase() === month.toLowerCase();
+             f.toLowerCase() === month;
     });
     
     if (monthDirs.length === 0) {
@@ -181,7 +178,7 @@ app.get('/api/search', (req, res) => {
     debug('Found %d text files', txtFiles.length);
     
     if (txtFiles.length === 0) {
-      debug('No .txt files found in %s directory', month);
+      debug('No .txt files found in %s directory', monthDirs[0]);
       return res.json({ results: [] });
     }
     
@@ -194,13 +191,15 @@ app.get('/api/search', (req, res) => {
       try {
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n');
-        const pattern = new RegExp(`^${monthDirs[0]} ${day.toString().padStart(2, '0')}(:|\\s|$)`, 'i');
-        debugData('Using matching pattern: %s', pattern);
+        const patternStr = `^${monthDirs[0]} ${day.toString().padStart(2, '0')}(:|\\s|$)`;
+        const pattern = new RegExp(patternStr, 'i');
+        debugData('Searching with pattern: %s', patternStr);
         
         for (const line of lines) {
+          debugData('Testing line: %s', line);
           if (pattern.test(line)) {
             debugData('Matched line: %s', line);
-            const challenge = line.replace(/^[^:]+:\s*/, '').trim() || line.replace(/^[^\\s]+\\s+[^\\s]+\\s*/, '').trim();
+            const challenge = line.replace(new RegExp(`^${monthDirs[0]} ${day.toString().padStart(2, '0')}(:|\\s)+`, 'i'), '').trim();
             
             results.push({
               source: path.basename(file, '.txt'),
