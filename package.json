@@ -5,7 +5,7 @@
   "description": "a simple tool to grep out the daily art challenge from one or one sites (listed in test files)",
   "main": "server.js",
   "scripts": {
-    "prebuild": "node -e 'fs.writeFileSync(\"version.json\", JSON.stringify({version: new Date().toISOString()}))'",
+    "prebuild": "node -e \"fs.writeFileSync('public/version.json', JSON.stringify({version: new Date().toISOString()}))\"",
     "build": "echo 'Build complete'",
     "start": "node server.js public",
     "restart": "npm stop --if-present && npm start",
