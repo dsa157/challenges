@@ -1,6 +1,16 @@
 # Windsurf Deploys Configuration (Beta)
 # This is an auto-generated file used to store your app deployment configuration. Do not modify.
-# The ID of the project (different from project name) on the provider's system. This is populated as a way to update existing deployments.
 project_id: 32fbf7db-b116-412a-a9b8-32c03daa7ee4
-# The framework of the web application (examples: nextjs, react, vue, etc.)
 framework: node
+
+# Node.js specific configuration
+node_settings:
+  start_command: "node server.js public"
+  should_create_server: true
+
+# Required files to include
+include:
+  - "public/data/**"
+  - "server.js"
+  - "package.json"
+  - "package-lock.json"
