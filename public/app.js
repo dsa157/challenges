@@ -52,18 +52,6 @@ function init() {
   
   // Initial search
   search();
-  
-  // Fetch and display version
-  fetch('/api/version')
-    .then(response => response.json())
-    .then(data => {
-      const date = new Date(data.version);
-      const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
-      document.title = `Challenge Finder v${formattedDate}`;
-      const versionEl = document.getElementById('version');
-      versionEl.textContent = `v${formattedDate}`;
-    })
-    .catch(console.error);
 }
 
 // Navigate months (wrapping around)
@@ -127,40 +115,60 @@ async function search() {
   tbody.innerHTML = '';
   
   try {
-    const response = await fetchWithDebug(`/api/search?month=${month}&day=${day}`);
+    console.log('Making request to:', `/search?month=${month}&day=${day}`);
+    const response = await fetchWithDebug(`/search?month=${month}&day=${day}`);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', [...response.headers.entries()]);
     const data = await response.json();
     
+    console.log('API Response:', data);
+    if (data.results) {
+      console.log('Results count:', data.results.length);
+      console.log('First item:', JSON.stringify(data.results[0]));
+    }
     if (!response.ok) {
       throw new Error(data.error || 'Search failed');
     }
     
-    if (data.results.length === 0) {
+    if (data.success && data.results.length > 0) {
+      statusDiv.style.display = 'none';
+      resultsTable.style.display = 'table';
+      // Clear previous results
+      while (resultsTable.rows.length > 1) {
+        resultsTable.deleteRow(1);
+      }
+      
+      data.results.forEach(item => {
+        const row = resultsTable.insertRow();
+        row.insertCell().textContent = item.file.replace('.txt', '');
+        row.insertCell().textContent = `${month} ${day}`;
+        row.insertCell().textContent = item.matches.join(', '); 
+      });
+    } else {
+      statusDiv.style.display = 'block';
       statusDiv.textContent = `No challenges found for ${month} ${day}`;
       resultsTable.style.display = 'none';
-    } else {
-      statusDiv.textContent = '';
-      resultsTable.style.display = 'table';
-      data.results.forEach(item => {
-        const source = item.file.replace('.txt', '');
-        const date = `May ${day}`;
-        
-        item.matches.forEach(challenge => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${source}</td>
-            <td>${date}</td>
-            <td>${challenge}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      });
     }
   } catch (error) {
+    statusDiv.style.display = 'block';
     statusDiv.textContent = `No challenges found for ${month} ${day}`;
     resultsTable.style.display = 'none';
     console.error('Search error:', error);
   }
 }
 
-// Start the app
+document.addEventListener('DOMContentLoaded', () => {
+  // Version display
+  fetch('/version.json')
+    .then(res => res.json())
+    .then(data => {
+      const date = new Date(data.version);
+      const formatted = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}`;
+      document.getElementById('version').textContent = `v${formatted}`;
+    })
+    .catch(() => {
+      document.getElementById('version').textContent = 'vLocalDev';
+    });
+});
+
 init();

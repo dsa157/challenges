@@ -32,9 +32,11 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        source: results[0].source,
-        date: results[0].date,
-        challenge: results[0].challenge
+        success: true,
+        results: results.map(file => ({
+          file: file.source,
+          matches: file.challenge.split('\n')
+        })).filter(r => r.matches.length > 0)
       })
     };
   } catch (error) {
@@ -62,12 +64,12 @@ async function searchFiles(month, day) {
   return files.map(file => {
     const content = fs.readFileSync(path.join(monthDir, file), 'utf8');
     const matches = content.split('\n')
-      .filter(line => line.includes(`${month} ${day}:`));
+      .filter(line => line.toLowerCase().includes(`${month.toLowerCase()} ${day}:`));
       
     return {
       source: file,
       date: `${month} ${day}`,
-      challenge: matches.map(m => m.replace(`${month} ${day}:`, '').trim()).join('\n')
+      challenge: matches.map(m => m.replace(new RegExp(`${month} ${day}:`, 'i'), '').trim()).join('\n')
     };
   }).filter(r => r.challenge !== '');
 }
