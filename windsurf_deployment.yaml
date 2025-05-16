@@ -2,14 +2,18 @@
 # This is an auto-generated file used to store your app deployment configuration. Do not modify.
 project_id: 32fbf7db-b116-412a-a9b8-32c03daa7ee4
 framework: node
+node_version: 18
 
 # Node.js specific configuration
 node_settings:
   start_command: "node server.js public"
   should_create_server: true
   routes:
-    - path: /*
+    - path: /api/*
       handler: node_server
+    - path: /*
+      handler: static
+      static_dir: public
 
 # Required files to include
 include:

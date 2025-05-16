@@ -81,7 +81,7 @@ app.get('/debug-file', (req, res) => {
 });
 
 // Deployment verification endpoint
-app.get('/deployment-check', (req, res) => {
+app.get('/api/deployment-check', (req, res) => {
   try {
     const months = fs.readdirSync(DATA_DIR).filter(f => {
       return fs.statSync(path.join(DATA_DIR, f)).isDirectory();
@@ -118,7 +118,7 @@ app.get('/deployment-check', (req, res) => {
 });
 
 // Search endpoint
-app.get('/search', (req, res) => {
+app.get('/api/search', (req, res) => {
   const month = req.query.month?.toLowerCase();
   const day = req.query.day;
   
