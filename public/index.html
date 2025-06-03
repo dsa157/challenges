@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Challenge Finder</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -81,19 +82,121 @@
       padding: 8px;
       font-size: 16px;
     }
-    #debug-panel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 150px;
-      overflow-y: auto;
-      background: #111;
-      color: #0f0;
-      padding: 10px;
-      font-family: monospace;
-      display: none;
-    }
+    #debug-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  #debug-toggle:hover {
+    background: #555;
+  }
+
+  #debug-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    color: #333;
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    display: none;
+    z-index: 999;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  }
+
+  .debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .debug-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  #debug-close {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+  }
+
+  #debug-close:hover {
+    color: #333;
+  }
+
+  #debug-content {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  #debug-content .files-info {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  
+  #debug-content .debug-header {
+    font-weight: bold;
+    margin: 0 0 4px 0;
+    padding: 0;
+  }
+  
+  #debug-content ul {
+    margin: 0;
+    padding: 0 0 0 16px;
+  }
+  
+  #debug-content li {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #debug-content li span {
+    color: #666;
+    font-size: 0.9em;
+  }
+  
+  #debug-content .debug-dir {
+    margin: 4px 0 0 0;
+    padding: 0;
+    color: #666;
+    font-size: 0.9em;
+  }
   </style>
 </head>
 <body>
@@ -133,9 +236,18 @@
     <tbody></tbody>
   </table>
   
-  <div id="debug-panel">
-    <h3>Debug Console</h3>
-    <div id="debug-content"></div>
+  <!-- Bug icon to toggle debug panel -->
+  <button id="debug-toggle" class="debug-toggle" title="Toggle debug panel" aria-label="Toggle debug panel">
+    <i data-lucide="bug" width="24" height="24"></i>
+  </button>
+  
+  <!-- Debug panel (hidden by default) -->
+  <div id="debug-panel" style="display: none;">
+    <div class="debug-header">
+      <h3>Debug Information</h3>
+      <button id="debug-close" class="debug-close">×</button>
+    </div>
+    <pre id="debug-content"></pre>
   </div>
   
   <script src="app.js"></script>

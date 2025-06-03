@@ -6,23 +6,35 @@ const debugData = require('debug')('server:data');
 const debugError = require('debug')('server:error');
 const serverless = require('serverless-http');
 
+// Month names for default date handling
+const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
 const app = express();
 
-// Flexible Netlify data directory resolution
-const DATA_DIR = process.env.AWS_LAMBDA_FUNCTION_NAME
-  ? path.join(__dirname, '../data') // /var/task/src/functions/data
-  : path.join(__dirname, 'public/data');
+// Data directory resolution for different environments
+function getDataDir() {
+  // Try multiple possible locations
+  const possibleDirs = [
+    path.join(__dirname, 'src/data'),     // Local development and Netlify
+    '/var/task/src/data'                 // Netlify Lambda
+  ];
 
-// Create directory if missing
-if (!fs.existsSync(DATA_DIR)) {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log('Created data directory at:', DATA_DIR);
-  } catch (err) {
-    console.error('Failed to create data directory:', err);
-    process.exit(1);
+  for (const dir of possibleDirs) {
+    console.log(`Checking for data directory: ${dir}`);
+    if (fs.existsSync(dir)) {
+      console.log(`Using data directory: ${dir}`);
+      return dir;
+    }
   }
+  
+  console.error('No data directory found in any expected location');
+  console.error('Searched in:', possibleDirs);
+  process.exit(1);
 }
+
+const DATA_DIR = getDataDir();
+console.log('Final data directory:', DATA_DIR);
+console.log('Directory contents:', fs.readdirSync(DATA_DIR));
 
 // Function to find directory case-insensitively
 function findCaseInsensitiveDir(basePath, dirName) {
@@ -231,10 +243,13 @@ app.get('/api/debug/files', (req, res) => {
 // Search endpoint
 app.get('/api/search', (req, res) => {
   console.log('Search request:', req.query);
-  const { month, day } = req.query;
-  if (!month || !day) {
-    return res.status(400).json({ error: 'Month and day parameters are required' });
-  }
+  
+  // Set default to current month and day if not provided
+  const now = new Date();
+  const month = req.query.month || months[now.getMonth()];
+  const day = req.query.day || now.getDate().toString();
+  
+  console.log('Using search parameters - month:', month, 'day:', day);
 
   try {
     // Define possible data directories to check
@@ -277,46 +292,92 @@ app.get('/api/search', (req, res) => {
     }
 
     // Read all files in the month directory
-    const files = fs.readdirSync(monthDir, { withFileTypes: true })
+    const monthFiles = fs.readdirSync(monthDir, { withFileTypes: true })
       .filter(dirent => dirent.isFile() && !dirent.name.startsWith('.'))
-      .map(dirent => dirent.name);
+      .map(dirent => ({
+        name: dirent.name,
+        path: path.join(monthDir, dirent.name),
+        size: fs.statSync(path.join(monthDir, dirent.name)).size
+      }));
     
-    console.log(`Found ${files.length} files in ${monthDir}:`, files);
+    console.log(`Found ${monthFiles.length} files in ${monthDir}:`, monthFiles.map(f => f.name));
+    
+    // Create a list of loaded files for the UI
+    const loadedFiles = monthFiles.map(file => ({
+      name: file.name,
+      size: file.size,
+      path: file.path.replace(process.cwd(), '') // Make path relative
+    }));
 
     const results = [];
     
-    for (const file of files) {
+    for (const { name: fileName, path: filePath } of monthFiles) {
+      console.log(`\n--- Processing file: ${fileName} (${filePath}) ---`);
+      
       try {
-        const filePath = path.join(monthDir, file);
-        console.log(`Processing file: ${filePath}`);
-        const content = fs.readFileSync(filePath, 'utf-8');
+        // Log file stats
+        const stats = fs.statSync(filePath);
+        console.log(`File size: ${stats.size} bytes`);
         
-        // Try both formats: "May 01:" and "May 1:"
+        // Read file content with explicit encoding
+        const content = fs.readFileSync(filePath, 'utf-8');
+        console.log(`File content length: ${content.length} characters`);
+        
+        // Log first 100 chars for debugging
+        console.log(`First 100 chars: ${content.substring(0, 100).replace(/\n/g, '\\n')}...`);
+        
+        // Prepare search patterns
+        const monthName = month.charAt(0).toUpperCase() + month.slice(1).toLowerCase();
         const dayNum = parseInt(day, 10);
         const dayPatterns = [
-          new RegExp(`^${month}\\s+${dayNum}:`, 'i'),  // May 1:
-          new RegExp(`^${month}\\s+0?${dayNum}:`, 'i')  // May 01:
+          new RegExp(`^${monthName}\\s+${dayNum}:`, 'i'),  // May 1:
+          new RegExp(`^${monthName}\\s+0?${dayNum}:`, 'i')   // May 01:
         ];
         
+        console.log(`Searching for patterns:`, dayPatterns.map(p => p.toString()));
+        
+        // Process each line
         const lines = content.split('\n');
         console.log(`File has ${lines.length} lines`);
         
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
           for (const pattern of dayPatterns) {
             if (pattern.test(line)) {
-              const match = line.replace(new RegExp(`^${month}\\s+\\d+:\\s*`, 'i'), '');
-              console.log(`Found match in ${file}:`, { line, match });
-              results.push({ file, matches: [match] });
+              const match = line.replace(new RegExp(`^${monthName}\\s+\\d+:\\s*`, 'i'), '').trim();
+              console.log(`Found match on line ${i + 1}:`, { line, match });
+              results.push({ 
+                file: fileName, 
+                matches: [match],
+                lineNumber: i + 1,
+                lineContent: line
+              });
               break;
             }
           }
         }
+        
+        if (results.length === 0) {
+          console.log(`No matches found in ${fileName} for day ${day}`);
+        }
       } catch (fileError) {
-        console.error(`Error processing file ${file}:`, fileError);
+        console.error(`Error processing file ${fileName}:`, fileError);
       }
     }
 
-    res.json({ success: true, results });
+    // Include loaded files and month directory in the response
+    res.json({ 
+      success: true, 
+      results,
+      loadedFiles: monthFiles.map(file => ({
+        name: file.name,
+        size: file.size,
+        path: file.path.replace(process.cwd(), '') // Make path relative
+      })),
+      monthDir: monthDir.replace(process.cwd(), '') // Make path relative
+    });
   } catch (error) {
     console.error('Search error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
