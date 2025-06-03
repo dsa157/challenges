@@ -115,8 +115,8 @@ async function search() {
   tbody.innerHTML = '';
   
   try {
-    console.log('Making request to:', `/search?month=${month}&day=${day}`);
-    const response = await fetchWithDebug(`/search?month=${month}&day=${day}`);
+    console.log('Making request to:', `/api/search?month=${month}&day=${day}`);
+    const response = await fetchWithDebug(`/api/search?month=${month}&day=${day}`);
     console.log('Response status:', response.status);
     console.log('Response headers:', [...response.headers.entries()]);
     const data = await response.json();

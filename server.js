@@ -24,11 +24,36 @@ if (!fs.existsSync(DATA_DIR)) {
   }
 }
 
+// Function to find directory case-insensitively
+function findCaseInsensitiveDir(basePath, dirName) {
+  try {
+    const entries = fs.readdirSync(basePath, { withFileTypes: true });
+    const found = entries.find(entry => 
+      entry.isDirectory() && entry.name.toLowerCase() === dirName.toLowerCase()
+    );
+    return found ? path.join(basePath, found.name) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Function to read directory contents case-insensitively
+function readDirCaseInsensitive(dirPath) {
+  try {
+    return fs.readdirSync(dirPath, { withFileTypes: true });
+  } catch (err) {
+    // If directory doesn't exist, try to find a case-insensitive match
+    const dirName = path.basename(dirPath);
+    const parentDir = path.dirname(dirPath);
+    const foundDir = findCaseInsensitiveDir(parentDir, dirName);
+    return foundDir ? fs.readdirSync(foundDir, { withFileTypes: true }) : [];
+  }
+}
+
 console.log('Using data directory:', DATA_DIR);
 console.log('Directory contents:', fs.readdirSync(DATA_DIR));
 
 debugData('Using verified data directory: %s', DATA_DIR);
-
 debugData('Using data directory: %s (exists: %s)', DATA_DIR, fs.existsSync(DATA_DIR));
 
 // Middleware
@@ -173,25 +198,128 @@ app.use('/api', (err, req, res, next) => {
   });
 });
 
+// Debug endpoint to list all files
+app.get('/api/debug/files', (req, res) => {
+  try {
+    const dataDirs = [
+      path.join(__dirname, 'public/data'),
+      path.join(__dirname, 'data'),
+      path.join(__dirname, 'src/data')
+    ];
+    
+    let months = [];
+    for (const dir of dataDirs) {
+      if (fs.existsSync(dir)) {
+        months = fs.readdirSync(dir, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.'))
+          .map(dirent => ({
+            name: dirent.name,
+            path: path.join(dir, dirent.name),
+            files: fs.readdirSync(path.join(dir, dirent.name))
+          }));
+        break;
+      }
+    }
+    
+    res.json({ dataDirs, months });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ error: 'Debug error', details: error.message });
+  }
+});
+
 // Search endpoint
 app.get('/api/search', (req, res) => {
+  console.log('Search request:', req.query);
   const { month, day } = req.query;
-  const dayPattern = new RegExp(`May\\s+${day}:`);
-  const dataDir = path.join(__dirname, 'public/data', month);
-  
+  if (!month || !day) {
+    return res.status(400).json({ error: 'Month and day parameters are required' });
+  }
+
   try {
-    const results = fs.readdirSync(dataDir).map(file => {
-      const content = fs.readFileSync(path.join(dataDir, file), 'utf-8');
-      const matches = content.split('\n')
-        .filter(line => dayPattern.test(line))
-        .map(line => line.replace(/^May\s+\d+:\s*/, ''));
-      
-      return { file, matches };
-    }).filter(result => result.matches.length > 0);
+    // Define possible data directories to check
+    const possibleDirs = [
+      path.join(__dirname, 'public/data'),
+      path.join(__dirname, 'data'),
+      path.join(__dirname, 'src/data')
+    ];
+    
+    // Find the first existing data directory
+    let dataDir = '';
+    for (const dir of possibleDirs) {
+      if (fs.existsSync(dir)) {
+        dataDir = dir;
+        break;
+      }
+    }
+    
+    if (!dataDir) {
+      return res.status(500).json({ 
+        error: 'No data directory found',
+        searchedDirs: possibleDirs
+      });
+    }
+    
+    console.log('Using data directory:', dataDir);
+    
+    // Find the correct month directory case-insensitively
+    const monthDir = findCaseInsensitiveDir(dataDir, month) || path.join(dataDir, month);
+    console.log('Using month directory:', monthDir);
+    
+    if (!fs.existsSync(monthDir)) {
+      return res.status(404).json({ 
+        error: `Month directory not found: ${month}`,
+        searchedPath: dataDir,
+        available: fs.readdirSync(dataDir, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(d => d.name)
+      });
+    }
+
+    // Read all files in the month directory
+    const files = fs.readdirSync(monthDir, { withFileTypes: true })
+      .filter(dirent => dirent.isFile() && !dirent.name.startsWith('.'))
+      .map(dirent => dirent.name);
+    
+    console.log(`Found ${files.length} files in ${monthDir}:`, files);
+
+    const results = [];
+    
+    for (const file of files) {
+      try {
+        const filePath = path.join(monthDir, file);
+        console.log(`Processing file: ${filePath}`);
+        const content = fs.readFileSync(filePath, 'utf-8');
+        
+        // Try both formats: "May 01:" and "May 1:"
+        const dayNum = parseInt(day, 10);
+        const dayPatterns = [
+          new RegExp(`^${month}\\s+${dayNum}:`, 'i'),  // May 1:
+          new RegExp(`^${month}\\s+0?${dayNum}:`, 'i')  // May 01:
+        ];
+        
+        const lines = content.split('\n');
+        console.log(`File has ${lines.length} lines`);
+        
+        for (const line of lines) {
+          for (const pattern of dayPatterns) {
+            if (pattern.test(line)) {
+              const match = line.replace(new RegExp(`^${month}\\s+\\d+:\\s*`, 'i'), '');
+              console.log(`Found match in ${file}:`, { line, match });
+              results.push({ file, matches: [match] });
+              break;
+            }
+          }
+        }
+      } catch (fileError) {
+        console.error(`Error processing file ${file}:`, fileError);
+      }
+    }
 
     res.json({ success: true, results });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
