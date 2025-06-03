@@ -246,29 +246,31 @@ async function search() {
 
 // Initialize debug panel to show loaded files
 function initDebugPanel() {
+  console.log('Initializing debug panel...');
   const debugToggle = document.getElementById('debug-toggle');
   const debugPanel = document.getElementById('debug-panel');
   const debugContent = document.getElementById('debug-content');
   const debugClose = document.getElementById('debug-close');
-  
+
   if (!debugToggle || !debugPanel || !debugContent || !debugClose) {
-    console.error('Debug elements not found');
+    console.error('Debug elements not found:', { debugToggle, debugPanel, debugContent, debugClose });
     return;
   }
-  
-  // Function to update debug content with loaded files
+
+  // Function to update debug content
   function updateDebugContent() {
+    console.log('Updating debug content...');
     // Clear existing content
     debugContent.innerHTML = '';
-    
+
     // Get the most recent search data from the table's data attribute
-    const searchData = resultsTable.dataset.lastSearchData ? 
+    const searchData = resultsTable && resultsTable.dataset.lastSearchData ? 
       JSON.parse(resultsTable.dataset.lastSearchData) : null;
-    
+
     if (searchData && searchData.loadedFiles && searchData.loadedFiles.length > 0) {
       const filesInfo = document.createElement('div');
       filesInfo.className = 'files-info';
-      
+
       const filesList = searchData.loadedFiles.map(file => 
         `<li>${file.name} (${(file.size / 1024).toFixed(1)} KB) <span>${file.path}</span></li>`
       ).join('');
@@ -282,14 +284,15 @@ function initDebugPanel() {
       debugContent.textContent = 'No files loaded yet. Perform a search first.';
     }
   }
-  
+
   // Toggle debug panel
   function toggleDebugPanel(e) {
+    console.log('Toggle debug panel called');
     if (e) e.stopPropagation();
     const isVisible = debugPanel.style.display === 'block';
     debugPanel.style.display = isVisible ? 'none' : 'block';
     debugToggle.setAttribute('aria-expanded', !isVisible);
-    
+
     // Update icon based on panel state
     const icon = debugToggle.querySelector('i');
     if (icon) {
@@ -298,64 +301,71 @@ function initDebugPanel() {
         lucide.createIcons();
       }
     }
-    
-    // Update content when opening
+
+    // Save state to localStorage
+    localStorage.setItem('debugPanelOpen', !isVisible);
+
+    // Update content if opening
     if (!isVisible) {
       updateDebugContent();
     }
-    
-    // Store preference in localStorage
-    localStorage.setItem('debugPanelVisible', !isVisible);
   }
-  
-  // Set initial state from localStorage
-  const debugPanelVisible = localStorage.getItem('debugPanelVisible') === 'true';
-  debugPanel.style.display = debugPanelVisible ? 'block' : 'none';
-  debugToggle.setAttribute('aria-expanded', debugPanelVisible);
-  
-  // Initialize icon based on initial state
-  const icon = debugToggle.querySelector('i');
-  if (icon) {
-    icon.setAttribute('data-lucide', debugPanelVisible ? 'x' : 'bug');
-  }
-  
-  // Add event listeners
-  debugToggle.addEventListener('click', toggleDebugPanel);
-  debugClose.addEventListener('click', toggleDebugPanel);
-  
+
+  // Remove any existing event listeners
+  const newDebugClose = debugClose.cloneNode(true);
+  const newDebugToggle = debugToggle.cloneNode(true);
+  debugClose.parentNode.replaceChild(newDebugClose, debugClose);
+  debugToggle.parentNode.replaceChild(newDebugToggle, debugToggle);
+
+  // Store references to the new elements
+  const newCloseBtn = document.getElementById('debug-close');
+  const newToggleBtn = document.getElementById('debug-toggle');
+
+  // Close panel when clicking the close button
+  newCloseBtn.addEventListener('click', (e) => {
+    console.log('Close button clicked');
+    e.stopPropagation();
+    toggleDebugPanel(e);
+  });
+
+  // Toggle panel when clicking the debug button
+  newToggleBtn.addEventListener('click', toggleDebugPanel);
+
   // Close panel when clicking outside
   document.addEventListener('click', (e) => {
     if (debugPanel.style.display === 'block' && 
         !debugPanel.contains(e.target) && 
-        e.target !== debugToggle &&
-        !debugToggle.contains(e.target)) {
-      toggleDebugPanel();
+        !newToggleBtn.contains(e.target)) {
+      toggleDebugPanel(e);
     }
   });
-  
+
   // Update debug content when search completes
   document.addEventListener('searchComplete', updateDebugContent);
+
+  console.log('Debug panel initialization complete');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize Lucide icons
-  if (window.lucide) {
-    lucide.createIcons();
+  try {
+    // Initialize Lucide icons
+    if (window.lucide) {
+      lucide.createIcons();
+    } else {
+      console.error('Lucide icons not loaded');
+    }
+    
+    // Initialize the app
+    init();
+    
+    // Initialize debug panel
+    initDebugPanel();
+    
+    // Initial search
+    search();
+  } catch (error) {
+    console.error('Initialization error:', error);
   }
-  
-  // Initialize debug panel
-  initDebugPanel();
-  
-  // Version display
-  fetch('/version.json')
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('version').textContent = `v${data.version} (${data.buildDate})`;
-    })
-    .catch(err => console.error('Error loading version:', err));
-  
-  // Initialize the app
-  init();
 });
 
 init();

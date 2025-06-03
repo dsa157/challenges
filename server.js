@@ -11,25 +11,19 @@ const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', '
 
 const app = express();
 
-// Data directory resolution for different environments
+// Data directory resolution
 function getDataDir() {
-  // Try multiple possible locations
-  const possibleDirs = [
-    path.join(__dirname, 'src/data'),     // Local development and Netlify
-    '/var/task/src/data'                 // Netlify Lambda
-  ];
-
-  for (const dir of possibleDirs) {
-    console.log(`Checking for data directory: ${dir}`);
-    if (fs.existsSync(dir)) {
-      console.log(`Using data directory: ${dir}`);
-      return dir;
-    }
+  // Always use src/data for consistency
+  const dataDir = path.join(__dirname, 'src/data');
+  
+  // Create the directory if it doesn't exist
+  if (!fs.existsSync(dataDir)) {
+    console.log(`Creating data directory: ${dataDir}`);
+    fs.mkdirSync(dataDir, { recursive: true });
   }
   
-  console.error('No data directory found in any expected location');
-  console.error('Searched in:', possibleDirs);
-  process.exit(1);
+  console.log(`Using data directory: ${dataDir}`);
+  return dataDir;
 }
 
 const DATA_DIR = getDataDir();
@@ -242,43 +236,31 @@ app.get('/api/debug/files', (req, res) => {
 
 // Search endpoint
 app.get('/api/search', (req, res) => {
-  console.log('Search request:', req.query);
+  console.log('Search request received:', req.query);
+  console.log('Using data directory:', DATA_DIR);
   
   // Set default to current month and day if not provided
   const now = new Date();
-  const month = req.query.month || months[now.getMonth()];
+  const month = (req.query.month || months[now.getMonth()]).toLowerCase();
   const day = req.query.day || now.getDate().toString();
   
   console.log('Using search parameters - month:', month, 'day:', day);
-
+  
   try {
-    // Define possible data directories to check
-    const possibleDirs = [
-      path.join(__dirname, 'public/data'),
-      path.join(__dirname, 'data'),
-      path.join(__dirname, 'src/data')
-    ];
+    // Find the correct month directory case-insensitively
+    const monthDir = findCaseInsensitiveDir(DATA_DIR, month);
+    console.log('Looking for month directory:', monthDir || 'Not found');
     
-    // Find the first existing data directory
-    let dataDir = '';
-    for (const dir of possibleDirs) {
-      if (fs.existsSync(dir)) {
-        dataDir = dir;
-        break;
-      }
-    }
-    
-    if (!dataDir) {
-      return res.status(500).json({ 
-        error: 'No data directory found',
-        searchedDirs: possibleDirs
+    if (!monthDir) {
+      return res.status(404).json({ 
+        error: `Month directory not found: ${month}`,
+        searchedPath: DATA_DIR,
+        available: fs.readdirSync(DATA_DIR, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(d => d.name)
       });
     }
     
-    console.log('Using data directory:', dataDir);
-    
-    // Find the correct month directory case-insensitively
-    const monthDir = findCaseInsensitiveDir(dataDir, month) || path.join(dataDir, month);
     console.log('Using month directory:', monthDir);
     
     if (!fs.existsSync(monthDir)) {

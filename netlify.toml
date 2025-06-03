@@ -1,8 +1,16 @@
 [build]
-  command = "npm install && npm run build && cp version.json public/version.json"
+  command = "npm install && npm run build && cp version.json public/version.json && mkdir -p public/data && cp -R src/data/* public/data/"
   publish = "public"
   functions = "src/functions"
   base = "/"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[dev]
+  publish = "public"
+  targetPort = 3000
+  port = 3001
 
 [functions]
   included_files = [
