@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build && cp version.json public/version.json && rm -rf src/data && mkdir -p src/data && cp -R public/data/* src/data/ && echo \"Copied: $(find src/data -type f | wc -l) files\""
+  command = "npm install && npm run build && cp version.json public/version.json"
   publish = "public"
   functions = "src/functions"
   base = "/"
