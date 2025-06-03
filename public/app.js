@@ -1,10 +1,10 @@
 // DOM Elements
 const monthInput = document.getElementById('monthInput');
-const prevMonthBtn = document.getElementById('prevMonth');
-const nextMonthBtn = document.getElementById('nextMonth');
+let prevMonthBtn = document.getElementById('prevMonth');
+let nextMonthBtn = document.getElementById('nextMonth');
 const dayInput = document.getElementById('dayInput');
-const prevDayBtn = document.getElementById('prevDay');
-const nextDayBtn = document.getElementById('nextDay');
+let prevDayBtn = document.getElementById('prevDay');
+let nextDayBtn = document.getElementById('nextDay');
 const statusDiv = document.getElementById('status');
 const resultsTable = document.getElementById('resultsTable');
 const tbody = resultsTable.querySelector('tbody');
@@ -14,8 +14,15 @@ const debugContent = document.getElementById('debug-content');
 // Month names
 const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
+// Track if we've initialized
+let isInitialized = false;
+
 // Initialize UI
 function init() {
+  // Only initialize once
+  if (isInitialized) return;
+  isInitialized = true;
+  
   // Verify all required DOM elements exist
   const requiredElements = [
     monthInput, prevMonthBtn, nextMonthBtn,
@@ -33,13 +40,36 @@ function init() {
   if (!monthInput.value) monthInput.value = months[now.getMonth()];
   if (!dayInput.value) dayInput.value = now.getDate();
   
-  // Event listeners
+  // Remove any existing event listeners first
+  const newPrevMonth = prevMonthBtn.cloneNode(true);
+  const newNextMonth = nextMonthBtn.cloneNode(true);
+  const newPrevDay = prevDayBtn.cloneNode(true);
+  const newNextDay = nextDayBtn.cloneNode(true);
+  
+  // Replace the elements to clear any existing listeners
+  prevMonthBtn.parentNode.replaceChild(newPrevMonth, prevMonthBtn);
+  nextMonthBtn.parentNode.replaceChild(newNextMonth, nextMonthBtn);
+  prevDayBtn.parentNode.replaceChild(newPrevDay, prevDayBtn);
+  nextDayBtn.parentNode.replaceChild(newNextDay, nextDayBtn);
+  
+  // Update our references
+  prevMonthBtn = newPrevMonth;
+  nextMonthBtn = newNextMonth;
+  prevDayBtn = newPrevDay;
+  nextDayBtn = newNextDay;
+  
+  // Add event listeners
   prevMonthBtn.addEventListener('click', () => navigateMonth(-1));
   nextMonthBtn.addEventListener('click', () => navigateMonth(1));
   prevDayBtn.addEventListener('click', () => navigateDay(-1));
   nextDayBtn.addEventListener('click', () => navigateDay(1));
-  monthInput.addEventListener('change', search);
-  dayInput.addEventListener('change', search);
+  
+  // Input change handlers
+  const handleInputChange = () => search();
+  monthInput.removeEventListener('change', handleInputChange);
+  dayInput.removeEventListener('change', handleInputChange);
+  monthInput.addEventListener('change', handleInputChange);
+  dayInput.addEventListener('change', handleInputChange);
   
   // Initialize debug panel
   initDebugPanel();
@@ -48,22 +78,29 @@ function init() {
   search();
 }
 
-// Navigate months (wrapping around)
+// Navigate months
 function navigateMonth(offset) {
   const currentIndex = months.indexOf(monthInput.value.toLowerCase());
   if (currentIndex === -1) return;
   
-  const newIndex = (currentIndex + offset + 12) % 12;
-  monthInput.value = months[newIndex];
-  search();
+  const newIndex = currentIndex + offset;
+  if (newIndex >= 0 && newIndex < months.length) {
+    monthInput.value = months[newIndex];
+    // Manually trigger search since programmatic value changes don't trigger 'change' event
+    search();
+  }
 }
 
-// Navigate days (clamped to 1-31)
+// Navigate days
 function navigateDay(offset) {
   const currentDay = parseInt(dayInput.value) || 1;
-  const newDay = Math.max(1, Math.min(31, currentDay + offset));
-  dayInput.value = newDay;
-  search();
+  const newDay = currentDay + offset;
+  
+  if (newDay >= 1 && newDay <= 31) {
+    dayInput.value = newDay;
+    // Manually trigger search since programmatic value changes don't trigger 'change' event
+    search();
+  }
 }
 
 // Update status message
