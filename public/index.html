@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Challenges API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .endpoint {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Challenges API</h1>
+    <p>This is a serverless API for daily challenges. Use the following endpoints:</p>
+    
+    <div class="endpoint">
+        <h2>Search Challenges</h2>
+        <p>GET <code>/api/search?month=jun&day=07</code></p>
+        <p>Parameters:</p>
+        <ul>
+            <li><code>month</code> - Required. Month in lowercase (e.g., 'jun')</li>
+            <li><code>day</code> - Optional. Day of the month (e.g., '07' or '7'). Defaults to current day.</li>
+        </ul>
+        <p>Example: <a href="/api/search?month=jun&day=07" target="_blank">/api/search?month=jun&day=07</a></p>
+    </div>
+    
+    <div class="endpoint">
+        <h2>Available Months</h2>
+        <p>GET <code>/api/months</code></p>
+        <p>Returns a list of available months with challenges.</p>
+        <p>Example: <a href="/api/months" target="_blank">/api/months</a></p>
+    </div>
+    
+    <p>For more information, see the <a href="https://github.com/dsa157/challenges" target="_blank">GitHub repository</a>.</p>
+</body>
+</html>

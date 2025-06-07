@@ -1,25 +1,19 @@
 [build]
-  command = "npm install && npm run build"
-  publish = "."  # Current directory since we don't have static files
+  command = "npm install"
+  publish = "public"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
 
-[dev]
-  command = "node server.js"
-  port = 9002
-  targetPort = 9002
+# Edge function for dynamic redirects
+[[edge_functions]]
+  function = "redirect"
+  path = "/"
 
-# Redirect all requests to our server function
+# All other requests go to the server function
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
   status = 200
   force = true
-
-# Handle client-side routing - redirect all other routes to index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
