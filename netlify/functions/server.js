@@ -84,7 +84,7 @@ app.get('/api/search', (req, res) => {
             const match = line.replace(/^\w+\s+\d+\s*[-:]?\s*/, '').trim();
             results.push({
               file: file.name,
-              matches: [match],
+              match: match,
               lineNumber: i + 1,
               lineContent: line
             });

@@ -669,7 +669,7 @@
                     
                     row.innerHTML = `
                         <td class="source-cell">${fileName}</td>
-                        <td class="challenge-cell">${result.lineContent}</td>
+                        <td class="challenge-cell">${result.match || result.lineContent}</td>
                     `;
                     
                     tbody.appendChild(row);
