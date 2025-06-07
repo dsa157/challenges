@@ -334,11 +334,22 @@
         
         @media (max-width: 768px) {
             .search-form {
-                flex-direction: column;
+                flex-wrap: nowrap;
+                gap: 0.5rem;
+                padding: 0 1rem;
+            }
+            
+            .form-group {
+                min-width: 0;
             }
             
             button {
-                width: 100%;
+                white-space: nowrap;
+                padding: 0.5rem;
+            }
+            
+            input[type="number"] {
+                min-width: 60px;
             }
         }
     </style>
