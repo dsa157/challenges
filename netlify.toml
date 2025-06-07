@@ -8,13 +8,20 @@
 
 # Serve static files directly
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/index.html"
   status = 200
 
 # API routes go to the server function
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/:splat"
+  to = "/.netlify/functions/server/api/:splat"
+  status = 200
+  force = true
+
+# All other requests go to the server function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
   status = 200
   force = true

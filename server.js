@@ -48,6 +48,21 @@ function getChallengesFromTemplates(month, filename) {
 // Serve static files from the public directory
 app.use(express.static('public'));
 
+// API Routes
+app.get('/api/months', (req, res) => {
+  try {
+    const months = getAvailableMonthsFromTemplates();
+    res.json(months);
+  } catch (error) {
+    console.error('Error getting available months:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get available months',
+      message: error.message
+    });
+  }
+});
+
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -317,11 +332,14 @@ app.get('/api/search', (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 9002;
-app.listen(PORT, () => {
-  debug(`Server started on port ${PORT}`);
-  debug('Using in-memory data templates');
-});
+// Only start the server if this file is run directly
+if (require.main === module) {
+  const PORT = process.env.PORT || 9002;
+  app.listen(PORT, () => {
+    debug(`Server started on port ${PORT}`);
+    debug('Using in-memory data templates');
+  });
+}
 
 module.exports = app;
 module.exports.handler = serverless(app);

@@ -11,6 +11,7 @@
             --light: #f8f9fa;
             --dark: #343a40;
             --success: #28a745;
+            --border-radius: 6px;
         }
         
         body {
@@ -48,11 +49,58 @@
             gap: 1rem;
             margin-bottom: 1rem;
             flex-wrap: wrap;
+            align-items: flex-end;
         }
         
         .form-group {
             flex: 1;
             min-width: 200px;
+        }
+        
+        .date-navigation {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .date-navigation button {
+            width: 2.5rem;
+            height: 2.5rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        .date-navigation button:hover {
+            background-color: #3a5a80;
+            transform: scale(1.05);
+        }
+        
+        .date-navigation button:active {
+            transform: scale(0.95);
+        }
+        
+        .date-navigation input {
+            text-align: center;
+            font-size: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            width: 4rem;
+        }
+        
+        .date-display {
+            text-align: center;
+            font-weight: 500;
+            min-width: 120px;
         }
         
         label {
@@ -87,6 +135,65 @@
         
         .results {
             margin-top: 2rem;
+        }
+        
+        .debug-panel {
+            margin-top: 2rem;
+            border: 1px solid #e1e4e8;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .debug-header {
+            background-color: #f6f8fa;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .debug-content {
+            background-color: #fafbfc;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .debug-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .debug-section h4 {
+            margin: 0 0 0.5rem 0;
+            color: #24292e;
+            font-size: 0.9rem;
+        }
+        
+        .debug-section pre {
+            margin: 0;
+            padding: 0.75rem;
+            background-color: #f6f8fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        
+        .debug-toggle-icon {
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        
+        .debug-panel.collapsed .debug-toggle-icon {
+            transform: rotate(-90deg);
         }
         
         .result-card {
@@ -183,122 +290,264 @@
             <form id="searchForm" class="search-form">
                 <div class="form-group">
                     <label for="month">Month</label>
-                    <select id="month" name="month" required>
-                        <option value="">Select a month</option>
-                        <!-- Months will be populated by JavaScript -->
+                    <select id="month" required>
+                        <option value="jan">January</option>
+                        <option value="feb">February</option>
+                        <option value="mar">March</option>
+                        <option value="apr">April</option>
+                        <option value="may">May</option>
+                        <option value="jun">June</option>
+                        <option value="jul">July</option>
+                        <option value="aug">August</option>
+                        <option value="sep">September</option>
+                        <option value="oct">October</option>
+                        <option value="nov">November</option>
+                        <option value="dec">December</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
                     <label for="day">Day</label>
-                    <input type="number" id="day" name="day" min="1" max="31" placeholder="Day (1-31)">
+                    <div class="date-navigation">
+                        <button type="button" id="prevDay" title="Previous day">←</button>
+                        <div class="date-display">
+                            <input type="number" id="day" min="1" max="31" required>
+                        </div>
+                        <button type="button" id="nextDay" title="Next day">→</button>
+                    </div>
                 </div>
-                
-                <button type="submit" id="searchButton">Search</button>
+                <button type="submit">Search</button>
             </form>
             
             <div id="currentDate" style="font-style: italic; color: #6c757d; text-align: right;"></div>
         </div>
         
-        <div class="spinner" id="spinner"></div>
+        <div id="loading" style="display: none; text-align: center; padding: 2rem;">
+            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+            <p style="color: var(--secondary); font-size: 1.1rem;">Loading challenges...</p>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        </div>
+        
+        <div id="error" style="display: none; color: #dc3545; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin: 10px 0;"></div>
         
         <div id="results" class="results">
             <!-- Results will be inserted here -->
         </div>
+        
+        <div class="debug-panel">
+            <div class="debug-header" id="debugToggle">
+                <span>Debug Info</span>
+                <span class="debug-toggle-icon">▼</span>
+            </div>
+            <div class="debug-content" id="debugContent" style="display: none;">
+                <div class="debug-section">
+                    <h4>Request</h4>
+                    <pre id="debugRequest">No request made yet</pre>
+                </div>
+                <div class="debug-section">
+                    <h4>Response</h4>
+                    <pre id="debugResponse">No response yet</pre>
+                </div>
+                <div class="debug-section">
+                    <h4>Console</h4>
+                    <pre id="debugConsole"></pre>
+                </div>
+            </div>
+        </div>
     </main>
     
     <footer>
-        <p>© 2025 Daily Challenges | <a href="https://github.com/dsa157/challenges" target="_blank" style="color: var(--primary); text-decoration: none;">GitHub</a></p>
+        <p> 2025 Daily Challenges | <a href="https://github.com/dsa157/challenges" target="_blank" style="color: var(--primary); text-decoration: none;">GitHub</a></p>
     </footer>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get DOM elements
             const searchForm = document.getElementById('searchForm');
-            const resultsDiv = document.getElementById('results');
-            const spinner = document.getElementById('spinner');
+            const monthSelect = document.getElementById('month');
+            const dayInput = document.getElementById('day');
             const currentDateSpan = document.getElementById('currentDate');
+            const resultsDiv = document.getElementById('results');
+            const prevDayBtn = document.getElementById('prevDay');
+            const nextDayBtn = document.getElementById('nextDay');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            
+            // Set default to today's date
+            const today = new Date();
+            const currentMonth = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                                'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][today.getMonth()];
+            const currentDay = today.getDate();
+            
+            // Set initial values
+            monthSelect.value = currentMonth;
+            dayInput.value = currentDay;
+            
+            // Trigger initial search
+            searchChallenges({ month: currentMonth, day: currentDay });
+            
+            // Navigation handlers
+            function navigateDays(direction) {
+                console.log('Navigating days:', { direction });
+                let newDay = parseInt(dayInput.value, 10) + direction;
+                console.log('New day before validation:', newDay);
+                
+                if (isNaN(newDay)) newDay = 1;
+                
+                // Handle month boundaries
+                if (newDay < 1) {
+                    // Go to previous month
+                    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                    const currentMonthIndex = months.indexOf(monthSelect.value);
+                    const prevMonthIndex = (currentMonthIndex - 1 + 12) % 12;
+                    monthSelect.value = months[prevMonthIndex];
+                    newDay = 31; // Assume max days for simplicity
+                    console.log('Went to previous month. New month:', monthSelect.value, 'New day:', newDay);
+                } else if (newDay > 31) {
+                    // Go to next month
+                    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                    const currentMonthIndex = months.indexOf(monthSelect.value);
+                    const nextMonthIndex = (currentMonthIndex + 1) % 12;
+                    monthSelect.value = months[nextMonthIndex];
+                    newDay = 1;
+                    console.log('Went to next month. New month:', monthSelect.value, 'New day:', newDay);
+                } else {
+                    console.log('Same month. New day:', newDay);
+                }
+                
+                dayInput.value = newDay;
+                console.log('Triggering search with:', { month: monthSelect.value, day: dayInput.value });
+                triggerSearch();
+            }
+            
+            // Add click event listeners
+            prevDayBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Previous day button clicked');
+                navigateDays(-1);
+            });
+            
+            nextDayBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Next day button clicked');
+                navigateDays(1);
+            });
+            
+            // Trigger search when month or day changes
+            monthSelect.addEventListener('change', () => {
+                console.log('Month changed to:', monthSelect.value);
+                triggerSearch();
+            });
+            
+            dayInput.addEventListener('change', () => {
+                console.log('Day changed to:', dayInput.value);
+                triggerSearch();
+            });
+            
+            function triggerSearch() {
+                console.log('Triggering search with:', {
+                    month: monthSelect.value,
+                    day: dayInput.value
+                });
+                searchChallenges({
+                    month: monthSelect.value,
+                    day: dayInput.value
+                });
+            }
             
             // Set current date in the UI
             const now = new Date();
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            currentDateSpan.textContent = `Today is ${now.toLocaleDateString('en-US', options)}`;
+            currentDateSpan.textContent = `Showing challenges for ${now.toLocaleDateString('en-US', options)}`;
             
-            // Set default day to today
-            const dayInput = document.getElementById('day');
-            dayInput.placeholder = now.getDate();
+            // Debug panel toggle
+            const debugToggle = document.getElementById('debugToggle');
+            const debugContent = document.getElementById('debugContent');
+            const debugPanel = document.querySelector('.debug-panel');
             
-            // Fetch available months and populate dropdown
-            fetch('/api/months')
-                .then(response => response.json())
-                .then(data => {
-                    const monthSelect = document.getElementById('month');
-                    data.forEach(month => {
-                        const option = document.createElement('option');
-                        option.value = month;
-                        // Format month name (e.g., 'jun' -> 'June')
-                        const monthName = new Date(2000, ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-                            'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(month), 1)
-                            .toLocaleString('default', { month: 'long' });
-                        option.textContent = monthName;
-                        
-                        // Select current month by default
-                        if (month === ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-                            'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][now.getMonth()]) {
-                            option.selected = true;
-                        }
-                        
-                        monthSelect.appendChild(option);
-                    });
-                    
-                    // Trigger search for today's challenges
-                    searchChallenges({
-                        month: monthSelect.value,
-                        day: now.getDate().toString()
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading months:', error);
-                    resultsDiv.innerHTML = `
-                        <div class="no-results">
-                            <p>Error loading available months. Please try again later.</p>
-                        </div>
-                    `;
-                });
+            debugToggle.addEventListener('click', () => {
+                const isHidden = debugContent.style.display === 'none';
+                debugContent.style.display = isHidden ? 'block' : 'none';
+                debugPanel.classList.toggle('collapsed', !isHidden);
+            });
+            
+            // Override console.log to show in debug panel
+            const originalConsoleLog = console.log;
+            const debugConsole = document.getElementById('debugConsole');
+            
+            console.log = function() {
+                originalConsoleLog.apply(console, arguments);
+                const message = Array.from(arguments).map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                debugConsole.textContent += `${new Date().toISOString()}: ${message}\n`;
+                debugConsole.scrollTop = debugConsole.scrollHeight;
+            };
+            
+            console.error = console.log; // Also capture errors
             
             // Handle form submission
-            searchForm.addEventListener('submit', function(e) {
+            searchForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                
-                const month = document.getElementById('month').value;
-                const day = document.getElementById('day').value || new Date().getDate();
-                
-                searchChallenges({ month, day });
+                triggerSearch();
+            });
+            
+            // Set day input constraints and validation
+            dayInput.min = 1;
+            dayInput.max = 31;
+            
+            // Validate day input
+            dayInput.addEventListener('input', (e) => {
+                let value = parseInt(e.target.value, 10);
+                if (isNaN(value) || value < 1) {
+                    e.target.value = 1;
+                } else if (value > 31) {
+                    e.target.value = 31;
+                }
             });
             
             function searchChallenges({ month, day }) {
-                if (!month) return;
+                const requestData = { month, day, timestamp: new Date().toISOString() };
+                console.log('Searching for:', requestData);
                 
-                // Show loading spinner
-                spinner.style.display = 'block';
+                // Update debug panel
+                document.getElementById('debugRequest').textContent = JSON.stringify(requestData, null, 2);
+                document.getElementById('debugResponse').textContent = 'Loading...';
+                
+                // Show loading state
+                loadingDiv.style.display = 'block';
                 resultsDiv.innerHTML = '';
+                errorDiv.style.display = 'none';
                 
                 // Make API request
-                fetch(`/api/search?month=${month}&day=${day}`)
-                    .then(response => response.json())
+                fetch(`/api/search?month=${encodeURIComponent(month)}&day=${encodeURIComponent(day)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch challenges');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        document.getElementById('debugResponse').textContent = JSON.stringify(data, null, 2);
                         displayResults(data);
                     })
                     .catch(error => {
-                        console.error('Error searching challenges:', error);
-                        resultsDiv.innerHTML = `
-                            <div class="no-results">
-                                <p>Error loading challenges. Please try again.</p>
-                            </div>
-                        `;
+                        const errorObj = {
+                            message: error.message,
+                            stack: error.stack,
+                            name: error.name
+                        };
+                        document.getElementById('debugResponse').textContent = JSON.stringify(errorObj, null, 2);
+                        console.error('Error:', error);
+                        errorDiv.textContent = error.message || 'An error occurred while fetching challenges';
+                        errorDiv.style.display = 'block';
                     })
                     .finally(() => {
-                        // Hide loading spinner
-                        spinner.style.display = 'none';
+                        loadingDiv.style.display = 'none';
                     });
             }
             

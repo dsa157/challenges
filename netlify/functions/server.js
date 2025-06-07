@@ -1,6 +1,7 @@
 const express = require('express');
 const serverless = require('serverless-http');
 const path = require('path');
+const fs = require('fs');
 
 // Import template functions
 const { getChallenges, getMonthFiles, getAvailableMonths } = require('../../src/functions/data/templates');
@@ -8,13 +9,9 @@ const { getChallenges, getMonthFiles, getAvailableMonths } = require('../../src/
 // Create Express app
 const app = express();
 
-// Redirect root to today's challenge
 app.get('/', (req, res) => {
-  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-  const now = new Date();
-  const month = months[now.getMonth()];
-  const day = String(now.getDate()).padStart(2, '0');
-  res.redirect(`/api/search?month=${month}&day=${day}`);
+  const indexPath = path.join(__dirname, '..', '..', 'public', 'index.html');
+  res.sendFile(indexPath);
 });
 
 // Middleware
@@ -40,6 +37,21 @@ const getFilesForMonth = (month) => {
     content: file.content
   }));
 };
+
+// Get available months
+app.get('/api/months', (req, res) => {
+  try {
+    const months = getAvailableMonths();
+    res.json(months);
+  } catch (error) {
+    console.error('Error getting available months:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get available months',
+      message: error.message
+    });
+  }
+});
 
 // Search endpoint
 app.get('/api/search', (req, res) => {
@@ -113,8 +125,8 @@ app.use((err, req, res, next) => {
 // Export the serverless function
 module.exports.handler = serverless(app);
 
-// For local development
-if (process.env.NETLIFY_DEV) {
+// For local development - don't start a server when imported as a module
+if (require.main === module && process.env.NETLIFY_DEV) {
   const port = process.env.PORT || 9002;
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "build": "echo 'Build complete'",
-    "start": "node server.js",
+    "start": "node scripts/start-server.js",
+    "dev": "node scripts/start-server.js",
     "restart": "npm stop --if-present && npm start",
     "test": "jest"
   },
