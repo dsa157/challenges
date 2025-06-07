@@ -594,18 +594,27 @@
                 
                 // Show loading state
                 loadingDiv.style.display = 'block';
-                resultsDiv.innerHTML = '';
                 errorDiv.style.display = 'none';
                 
-                // Make API request
-                fetch(`/api/search?month=${encodeURIComponent(month)}&day=${encodeURIComponent(day)}`)
+                const url = `/api/search?month=${encodeURIComponent(month)}&day=${encodeURIComponent(day)}`;
+                console.log('Fetching from URL:', url);
+                
+                fetch(url)
                     .then(response => {
+                        console.log('Response status:', response.status);
                         if (!response.ok) {
-                            throw new Error('Failed to fetch challenges');
+                            return response.text().then(text => {
+                                console.error('Error response:', text);
+                                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                            });
                         }
-                        return response.json();
+                        return response.json().then(data => {
+                            console.log('Parsed response data:', data);
+                            return data;
+                        });
                     })
                     .then(data => {
+                        console.log('Displaying data:', data);
                         document.getElementById('debugResponse').textContent = JSON.stringify(data, null, 2);
                         displayResults(data);
                     })
@@ -615,8 +624,8 @@
                             stack: error.stack,
                             name: error.name
                         };
+                        console.error('Error details:', errorObj);
                         document.getElementById('debugResponse').textContent = JSON.stringify(errorObj, null, 2);
-                        console.error('Error:', error);
                         errorDiv.textContent = error.message || 'An error occurred while fetching challenges';
                         errorDiv.style.display = 'block';
                     })
@@ -627,6 +636,7 @@
             
             function displayResults(data) {
                 resultsDiv.innerHTML = ''; // Clear previous results
+                console.log('Displaying results:', data);
                 
                 if (!data.results || data.results.length === 0) {
                     resultsDiv.innerHTML = `
@@ -634,8 +644,11 @@
                             <p>No challenges found for the selected date.</p>
                         </div>
                     `;
+                    console.log('No results found');
                     return;
                 }
+                
+                console.log(`Found ${data.results.length} results`);
                 
                 // Get the month and day from the first result
                 const firstResult = data.results[0];
