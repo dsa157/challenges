@@ -1,66 +1,52 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const debug = require('debug')('server');
 const debugData = require('debug')('server:data');
 const debugError = require('debug')('server:error');
 const serverless = require('serverless-http');
+const { getChallenges, getMonthFiles, getAvailableMonths } = require('./src/data/templates');
 
 // Month names for default date handling
 const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 const app = express();
 
-// Data directory resolution
-function getDataDir() {
-  // Always use src/data for consistency
-  const dataDir = path.join(__dirname, 'src/data');
-  
-  // Create the directory if it doesn't exist
-  if (!fs.existsSync(dataDir)) {
-    console.log(`Creating data directory: ${dataDir}`);
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  
-  console.log(`Using data directory: ${dataDir}`);
-  return dataDir;
+// Enable CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// Parse URL-encoded bodies (as sent by HTML forms)
+app.use(express.urlencoded({ extended: true }));
+
+// Parse JSON bodies (as sent by API clients)
+app.use(express.json());
+
+// Log all requests
+app.use((req, res, next) => {
+  debug(`${req.method} ${req.path}`);
+  next();
+});
+
+// Get available months from our in-memory data
+function getAvailableMonthsFromTemplates() {
+  return getAvailableMonths();
 }
 
-const DATA_DIR = getDataDir();
-console.log('Final data directory:', DATA_DIR);
-console.log('Directory contents:', fs.readdirSync(DATA_DIR));
-
-// Function to find directory case-insensitively
-function findCaseInsensitiveDir(basePath, dirName) {
-  try {
-    const entries = fs.readdirSync(basePath, { withFileTypes: true });
-    const found = entries.find(entry => 
-      entry.isDirectory() && entry.name.toLowerCase() === dirName.toLowerCase()
-    );
-    return found ? path.join(basePath, found.name) : null;
-  } catch (err) {
-    return null;
-  }
+// Get files for a specific month from our in-memory data
+function getMonthFilesFromTemplates(month) {
+  return getMonthFiles(month);
 }
 
-// Function to read directory contents case-insensitively
-function readDirCaseInsensitive(dirPath) {
-  try {
-    return fs.readdirSync(dirPath, { withFileTypes: true });
-  } catch (err) {
-    // If directory doesn't exist, try to find a case-insensitive match
-    const dirName = path.basename(dirPath);
-    const parentDir = path.dirname(dirPath);
-    const foundDir = findCaseInsensitiveDir(parentDir, dirName);
-    return foundDir ? fs.readdirSync(foundDir, { withFileTypes: true }) : [];
-  }
+// Get challenges for a specific month and file from our in-memory data
+function getChallengesFromTemplates(month, filename) {
+  return getChallenges(month, filename);
 }
 
-console.log('Using data directory:', DATA_DIR);
-console.log('Directory contents:', fs.readdirSync(DATA_DIR));
-
-debugData('Using verified data directory: %s', DATA_DIR);
-debugData('Using data directory: %s (exists: %s)', DATA_DIR, fs.existsSync(DATA_DIR));
+// Serve static files from the public directory
+app.use(express.static('public'));
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
@@ -98,42 +84,25 @@ app.get('/test-file', (req, res) => {
 
 // Simple test endpoint
 app.get('/test', (req, res) => {
-  const testFile = path.join(__dirname, 'public/data/May/mermay.txt');
-  
-  try {
-    if (!fs.existsSync(testFile)) {
-      debugError('Test file not found: %s', testFile);
-      return res.status(404).json({
-        error: 'Test file not found',
-        path: testFile
-      });
-    }
-    
-    const content = fs.readFileSync(testFile, 'utf8');
-    res.json({ content });
-  } catch (e) {
-    debugError('Error reading file %s: %o', testFile, e);
-    res.status(500).json({
-      error: 'File read error',
-      message: e.message
-    });
-  }
+  res.json({
+    status: 'Server is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    dataSource: 'in-memory-templates',
+    availableMonths: getAvailableMonthsFromTemplates()
+  });
 });
 
 // Debug endpoint
 app.get('/debug-file', (req, res) => {
-  const filePath = path.join(DATA_DIR, 'May/mermay.txt');
-  debugData('Reading file: %s', filePath);
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
-    res.json({ content });
+    const months = getAvailableMonthsFromTemplates();
+    const files = getMonthFilesFromTemplates(months[0]);
+    const content = files.length > 0 ? files[0].content : 'No files available';
+    res.send(`<pre>${content}</pre>`);
   } catch (e) {
-    debugError('Error reading file %s: %o', filePath, e);
-    res.status(500).json({
-      error: 'File read failed',
-      path: filePath,
-      message: e.message
-    });
+    debugError('Error getting debug data: %o', e);
+    res.status(500).send('Error getting debug data');
   }
 });
 
@@ -237,72 +206,38 @@ app.get('/api/debug/files', (req, res) => {
 // Search endpoint
 app.get('/api/search', (req, res) => {
   console.log('Search request received:', req.query);
-  console.log('Using data directory:', DATA_DIR);
   
   // Set default to current month and day if not provided
   const now = new Date();
   const month = (req.query.month || months[now.getMonth()]).toLowerCase();
-  const day = req.query.day || now.getDate().toString();
+  const day = req.query.day || now.getDate().toString().padStart(2, '0');
   
-  console.log('Using search parameters - month:', month, 'day:', day);
+  console.log(`Searching for month: ${month}, day: ${day}`);
   
   try {
-    // Find the correct month directory case-insensitively
-    const monthDir = findCaseInsensitiveDir(DATA_DIR, month);
-    console.log('Looking for month directory:', monthDir || 'Not found');
+    // Get files for the requested month from our in-memory data
+    const files = getMonthFilesFromTemplates(month);
     
-    if (!monthDir) {
-      return res.status(404).json({ 
-        error: `Month directory not found: ${month}`,
-        searchedPath: DATA_DIR,
-        available: fs.readdirSync(DATA_DIR, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .map(d => d.name)
+    if (!files || files.length === 0) {
+      return res.status(200).json({
+        success: true,
+        results: [],
+        loadedFiles: [],
+        monthDir: `in-memory/${month}`,
+        message: `No data found for month: ${month}`,
+        availableMonths: getAvailableMonthsFromTemplates()
       });
     }
     
-    console.log('Using month directory:', monthDir);
+    console.log(`Found ${files.length} files for ${month}`);
     
-    if (!fs.existsSync(monthDir)) {
-      return res.status(404).json({ 
-        error: `Month directory not found: ${month}`,
-        searchedPath: dataDir,
-        available: fs.readdirSync(dataDir, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .map(d => d.name)
-      });
-    }
-
-    // Read all files in the month directory
-    const monthFiles = fs.readdirSync(monthDir, { withFileTypes: true })
-      .filter(dirent => dirent.isFile() && !dirent.name.startsWith('.'))
-      .map(dirent => ({
-        name: dirent.name,
-        path: path.join(monthDir, dirent.name),
-        size: fs.statSync(path.join(monthDir, dirent.name)).size
-      }));
-    
-    console.log(`Found ${monthFiles.length} files in ${monthDir}:`, monthFiles.map(f => f.name));
-    
-    // Create a list of loaded files for the UI
-    const loadedFiles = monthFiles.map(file => ({
-      name: file.name,
-      size: file.size,
-      path: file.path.replace(process.cwd(), '') // Make path relative
-    }));
-
     const results = [];
     
-    for (const { name: fileName, path: filePath } of monthFiles) {
-      console.log(`\n--- Processing file: ${fileName} (${filePath}) ---`);
+    for (const file of files) {
+      console.log(`\n--- Processing file: ${file.name} ---`);
       
       try {
-        // Log file stats
-        const stats = fs.statSync(filePath);
-        console.log(`File size: ${stats.size} bytes`);
-        
-        // Read file content with explicit encoding
-        const content = fs.readFileSync(filePath, 'utf-8');
+        const content = file.content;
         console.log(`File content length: ${content.length} characters`);
         
         // Log first 100 chars for debugging
@@ -312,14 +247,14 @@ app.get('/api/search', (req, res) => {
         const monthName = month.charAt(0).toUpperCase() + month.slice(1).toLowerCase();
         const dayNum = parseInt(day, 10);
         const dayPatterns = [
-          new RegExp(`^${monthName}\\s+${dayNum}:`, 'i'),  // May 1:
-          new RegExp(`^${monthName}\\s+0?${dayNum}:`, 'i')   // May 01:
+          new RegExp(`^${monthName}\\s+${dayNum}[^0-9]`, 'i'),  // May 1
+          new RegExp(`^${monthName}\\s+0?${dayNum}[^0-9]`, 'i')   // May 01
         ];
         
         console.log(`Searching for patterns:`, dayPatterns.map(p => p.toString()));
         
         // Process each line
-        const lines = content.split('\n');
+        const lines = content.split('\n').filter(line => line.trim() !== '');
         console.log(`File has ${lines.length} lines`);
         
         for (let i = 0; i < lines.length; i++) {
@@ -328,10 +263,10 @@ app.get('/api/search', (req, res) => {
           
           for (const pattern of dayPatterns) {
             if (pattern.test(line)) {
-              const match = line.replace(new RegExp(`^${monthName}\\s+\\d+:\\s*`, 'i'), '').trim();
+              const match = line.replace(new RegExp(`^${monthName}\\s+\\d+\\s*[-:]?\\s*`, 'i'), '').trim();
               console.log(`Found match on line ${i + 1}:`, { line, match });
               results.push({ 
-                file: fileName, 
+                file: file.name, 
                 matches: [match],
                 lineNumber: i + 1,
                 lineContent: line
@@ -342,33 +277,50 @@ app.get('/api/search', (req, res) => {
         }
         
         if (results.length === 0) {
-          console.log(`No matches found in ${fileName} for day ${day}`);
+          console.log(`No matches found in ${file.name} for day ${day}`);
         }
       } catch (fileError) {
-        console.error(`Error processing file ${fileName}:`, fileError);
+        console.error(`Error processing file ${file.name}:`, fileError);
       }
     }
 
-    // Include loaded files and month directory in the response
-    res.json({ 
-      success: true, 
-      results,
-      loadedFiles: monthFiles.map(file => ({
-        name: file.name,
-        size: file.size,
-        path: file.path.replace(process.cwd(), '') // Make path relative
+    // Prepare response with additional debug info
+    const response = {
+      success: true,
+      results: results.map(r => ({
+        file: r.file,
+        matches: r.matches,
+        lineNumber: r.lineNumber,
+        lineContent: r.lineContent
       })),
-      monthDir: monthDir.replace(process.cwd(), '') // Make path relative
-    });
+      loadedFiles: files.map(f => ({
+        name: f.name,
+        path: f.path,
+        size: Buffer.byteLength(f.content, 'utf8')
+      })),
+      monthDir: `in-memory/${month}`,
+      availableMonths: getAvailableMonthsFromTemplates(),
+      dataSource: 'in-memory-templates'
+    };
+    
+    res.json(response);
   } catch (error) {
     console.error('Search error:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to perform search',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      availableMonths: getAvailableMonthsFromTemplates(),
+      dataSource: 'in-memory-templates'
+    });
   }
 });
 
-app.listen(3000, () => {
-  debug('Server started');
-  debugData('Data directory: %s', DATA_DIR);
+const PORT = process.env.PORT || 9002;
+app.listen(PORT, () => {
+  debug(`Server started on port ${PORT}`);
+  debug('Using in-memory data templates');
 });
 
 module.exports = app;

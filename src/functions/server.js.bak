@@ -1,0 +1,233 @@
+const express = require('express');
+const serverless = require('serverless-http');
+const fs = require('fs');
+const path = require('path');
+
+// Enable debug logging
+process.env.DEBUG = 'netlify:function:*';
+const debug = require('debug')('netlify:function:server');
+
+const app = express();
+
+// Log all requests
+app.use((req, res, next) => {
+  debug(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Get data directory path
+function getDataDir() {
+  console.log('Current working directory:', process.cwd());
+  console.log('__dirname:', __dirname);
+  
+  const possibleDirs = [
+    path.join(process.cwd(), 'src/data'),
+    path.join(process.cwd(), 'public/data'),
+    path.join(process.cwd(), 'data'),
+    path.join(__dirname, '../data'),
+    path.join(__dirname, '../../data'),
+    '/var/task/data',
+    '/var/task/src/data'
+  ];
+
+  console.log('Checking possible data directories:');
+  for (const dir of possibleDirs) {
+    console.log(`- ${dir} - ${fs.existsSync(dir) ? 'EXISTS' : 'not found'}`);
+    if (fs.existsSync(dir)) {
+      console.log(`  Contents of ${dir}:`, fs.readdirSync(dir));
+      return dir;
+    }
+  }
+  
+  // If we get here, no directory was found - create one and show error
+  const defaultDir = path.join(process.cwd(), 'src/data');
+  console.error('No data directory found, creating:', defaultDir);
+  try {
+    fs.mkdirSync(defaultDir, { recursive: true });
+    console.log('Created default data directory');
+  } catch (error) {
+    console.error('Failed to create data directory:', error);
+  }
+  return defaultDir;
+}
+
+const DATA_DIR = getDataDir();
+
+// Enable CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// Handle search requests
+function handleSearch(req, res) {
+  console.log('Search request received:', req.query);
+  
+  // Set default to current month and day if not provided
+  const now = new Date();
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const month = (req.query.month || months[now.getMonth()]).toLowerCase();
+  const day = req.query.day || now.getDate().toString();
+  
+  console.log('Using search parameters - month:', month, 'day:', day);
+  
+  try {
+    // Find the month directory case-insensitively
+    const monthDir = findCaseInsensitiveDir(DATA_DIR, month);
+    console.log('Looking for month directory:', monthDir || 'Not found');
+    
+    if (!monthDir) {
+      return res.status(404).json({ 
+        error: `Month directory not found: ${month}`,
+        searchedPath: DATA_DIR,
+        available: fs.readdirSync(DATA_DIR, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(d => d.name)
+      });
+    }
+    
+    console.log('Using month directory:', monthDir);
+    
+    // Find all files in the month directory
+    const files = fs.readdirSync(monthDir);
+    const results = [];
+    
+    // Read each file and check for matching day
+    for (const file of files) {
+      const filePath = path.join(monthDir, file);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const lines = content.split('\n');
+      
+      // Find lines that match the day
+      const matches = lines.filter(line => 
+        line.toLowerCase().includes(`${month} ${day}:`) ||
+        line.toLowerCase().includes(`${month} ${day.padStart(2, '0')}:`)
+      );
+      
+      if (matches.length > 0) {
+        results.push({
+          file: file,
+          date: `${month} ${day}`,
+          challenge: matches.map(m => m.split(':').slice(1).join(':').trim()).join('\n')
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      results: results,
+      hasResults: results.length > 0,
+      resultsCount: results.length,
+      hasLoadedFiles: true,
+      loadedFilesCount: files.length,
+      monthDir: monthDir,
+      debug: {
+        dataDir: DATA_DIR,
+        monthDir: monthDir,
+        availableDirs: fs.readdirSync(DATA_DIR, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(d => d.name)
+      }
+    });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ 
+      error: 'Error processing search',
+      details: error.message
+    });
+  }
+}
+
+// Helper function to find directory case-insensitively
+function findCaseInsensitiveDir(basePath, dirName) {
+  try {
+    const files = fs.readdirSync(basePath, { withFileTypes: true });
+    const dir = files.find(
+      f => f.isDirectory() && f.name.toLowerCase() === dirName.toLowerCase()
+    );
+    return dir ? path.join(basePath, dir.name) : null;
+  } catch (error) {
+    console.error('Error finding directory:', error);
+    return null;
+  }
+}
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Test endpoint
+app.get('/.netlify/functions/server/test', (req, res) => {
+  console.log('Test endpoint hit');
+  res.json({
+    success: true,
+    message: 'Function is working',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    __dirname: __dirname,
+    files: fs.readdirSync('.')
+  });
+});
+
+// Test endpoint to verify function is reachable
+app.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Function is working',
+    timestamp: new Date().toISOString(),
+    node_env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    __dirname: __dirname,
+    files: fs.readdirSync('.'),
+    dataDir: DATA_DIR,
+    dataDirExists: fs.existsSync(DATA_DIR),
+    dataDirContents: fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : []
+  });
+});
+
+// API endpoints - handle both with and without the Netlify functions path
+app.get('/api/search', handleSearch);
+app.get('/search', handleSearch);
+
+// Catch-all route for debugging
+app.all('*', (req, res) => {
+  debug('Catch-all route hit:', req.path);
+  debug('Headers:', req.headers);
+  debug('Query:', req.query);
+  
+  res.status(404).json({
+    error: 'Not Found',
+    path: req.path,
+    method: req.method,
+    headers: req.headers,
+    query: req.query
+  });
+});
+
+// Create the serverless handler
+const handler = serverless(app);
+
+// Export the handler with enhanced logging
+exports.handler = async (event, context) => {
+  console.log('--- New Request ---');
+  console.log('Event:', JSON.stringify(event, null, 2));
+  console.log('Context:', JSON.stringify(context, null, 2));
+  
+  try {
+    const result = await handler(event, context);
+    console.log('Response:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (error) {
+    console.error('Error in handler:', error);
+    throw error;
+  }
+};

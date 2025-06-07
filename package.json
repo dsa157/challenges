@@ -5,9 +5,8 @@
   "description": "a simple tool to grep out the daily art challenge from one or one sites (listed in test files)",
   "main": "server.js",
   "scripts": {
-    "prebuild": "node -e \"require('fs').writeFileSync('./public/version.json', JSON.stringify({version: new Date().toISOString()}))\"",
     "build": "echo 'Build complete'",
-    "start": "node server.js public",
+    "start": "node server.js",
     "restart": "npm stop --if-present && npm start",
     "test": "jest"
   },
@@ -26,8 +25,8 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "debug": "^4.3.4",
-    "express": "^4.18.2",
+    "debug": "^4.4.1",
+    "express": "^4.21.2",
     "serverless-http": "^3.2.0"
   },
   "devDependencies": {
