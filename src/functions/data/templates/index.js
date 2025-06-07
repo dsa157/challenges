@@ -164,7 +164,43 @@ Jun 27: Chiaroscuro
 Jun 28: Sand Castle
 Jun 29: Mud Day
 Jun 30: Blue-Purple
-`  }
+`  },
+jul: {
+   'nick.txt': `
+   `,
+   'monai.txt': `
+   `,
+}
+aug: {
+  'nick.txt': `
+  `,
+  'monai.txt': `
+  `,
+}
+sep: {
+  'nick.txt': `
+  `,
+  'monai.txt': `
+  `,
+}
+oct: {
+  'nick.txt': `
+  `,
+  'monai.txt': `
+  `,
+}
+nov: {
+  'nick.txt': `
+  `,
+  'monai.txt': `
+  `,
+}
+dec: {
+  'nick.txt': `
+  `,
+  'monai.txt': `
+  `,
+}
 };
 
 // Get challenges for a specific month and file
