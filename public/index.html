@@ -530,10 +530,7 @@
                 });
             }
             
-            // Set current date in the UI
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            currentDateSpan.textContent = `Showing challenges for ${now.toLocaleDateString('en-US', options)}`;
+            // Date display removed as per user request
             
             // Debug panel toggle
             const debugToggle = document.getElementById('debugToggle');
