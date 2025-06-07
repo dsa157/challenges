@@ -70,18 +70,33 @@ app.get('/api/search', (req, res) => {
     const results = [];
     const monthAbbr = month.slice(0, 3).toLowerCase();
     
+    console.log(`Searching for month: ${month} (${monthAbbr}), day: ${day}`);
+    console.log(`Found ${files.length} files for month ${month}:`, files.map(f => f.name));
+    
     for (const file of files) {
       const lines = file.content.split('\n').filter(line => line.trim() !== '');
+      console.log(`Processing file: ${file.name} with ${lines.length} lines`);
       
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
+        if (!line) continue;
+        
         // Make month abbreviation matching case-insensitive
         const lineMonthAbbr = line.slice(0, 3).toLowerCase();
+        console.log(`Line ${i + 1}: Checking '${line}'`);
+        
         if (lineMonthAbbr === monthAbbr) {
           // Match both single and double-digit days (e.g., '7' or '07')
           const dayMatch = line.match(/^\w+\s+(\d{1,2})/i);
-          if (dayMatch && (dayMatch[1] === day || dayMatch[1] === day.replace(/^0+/, ''))) {
+          const lineDay = dayMatch ? dayMatch[1] : null;
+          const normalizedSearchDay = day.replace(/^0+/, '');
+          const normalizedLineDay = lineDay ? lineDay.replace(/^0+/, '') : null;
+          
+          console.log(`  Line day: ${lineDay}, Search day: ${day}, Normalized: ${normalizedLineDay} vs ${normalizedSearchDay}`);
+          
+          if (dayMatch && (lineDay === day || normalizedLineDay === normalizedSearchDay)) {
             const match = line.replace(/^\w+\s+\d+\s*[-:]?\s*/, '').trim();
+            console.log(`  Match found in ${file.name}: ${match}`);
             results.push({
               file: file.name,
               match: match,
