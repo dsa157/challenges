@@ -12,16 +12,15 @@
   to = "/index.html"
   status = 200
 
-# API routes go to the server function
+# API routes go to the search function
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/api/:splat"
+  to = "/.netlify/functions/search"
   status = 200
   force = true
 
-# All other requests go to the server function
+# All other requests serve static files
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
-  force = true
