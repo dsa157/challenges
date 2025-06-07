@@ -169,37 +169,37 @@ jul: {
    'nick.txt': `
    `,
    'monai.txt': `
-   `,
-}
+   `
+},
 aug: {
   'nick.txt': `
   `,
   'monai.txt': `
-  `,
-}
+  `
+},
 sep: {
   'nick.txt': `
   `,
   'monai.txt': `
-  `,
-}
+  `
+},
 oct: {
   'nick.txt': `
   `,
   'monai.txt': `
-  `,
-}
+  `
+},
 nov: {
   'nick.txt': `
   `,
   'monai.txt': `
-  `,
-}
+  `
+},
 dec: {
   'nick.txt': `
   `,
   'monai.txt': `
-  `,
+  `
 }
 };
 
