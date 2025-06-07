@@ -8,6 +8,15 @@ const { getChallenges, getMonthFiles, getAvailableMonths } = require('../../src/
 // Create Express app
 const app = express();
 
+// Redirect root to today's challenge
+app.get('/', (req, res) => {
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const now = new Date();
+  const month = months[now.getMonth()];
+  const day = String(now.getDate()).padStart(2, '0');
+  res.redirect(`/api/search?month=${month}&day=${day}`);
+});
+
 // Middleware
 app.use(express.json());
 app.use((req, res, next) => {

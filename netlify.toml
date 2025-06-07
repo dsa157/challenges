@@ -6,12 +6,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Edge function for dynamic redirects
-[[edge_functions]]
-  function = "redirect"
-  path = "/"
-
-# All other requests go to the server function
+# All requests go to the server function
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
