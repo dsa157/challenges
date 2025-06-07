@@ -147,6 +147,75 @@
         
         .results {
             margin-top: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .results-header {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .source-section {
+            margin-bottom: 2.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .source-header {
+            background-color: #f8f9fa;
+            padding: 0.75rem 1.25rem;
+            margin: 0;
+            font-size: 1.1rem;
+            color: #495057;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .result-card {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+        
+        .result-card:last-child {
+            border-bottom: none;
+        }
+        
+        .result-card:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-title {
+            margin: 0;
+            color: var(--primary);
+        }
+        
+        .result-source {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        
+        .result-content {
+            margin: 0;
+            color: #495057;
+            line-height: 1.5;
+        }
+        
+        .result-content p {
+            margin: 0;
         }
         
         .debug-panel {
@@ -570,6 +639,8 @@
             }
             
             function displayResults(data) {
+                resultsDiv.innerHTML = ''; // Clear previous results
+                
                 if (!data.results || data.results.length === 0) {
                     resultsDiv.innerHTML = `
                         <div class="no-results">
@@ -579,27 +650,50 @@
                     return;
                 }
                 
-                // Format the date for display
+                // Group results by source file
+                const resultsBySource = data.results.reduce((acc, result) => {
+                    if (!acc[result.file]) {
+                        acc[result.file] = [];
+                    }
+                    acc[result.file].push(result);
+                    return acc;
+                }, {});
+                
+                // Get the month and day from the first result
+                const firstResult = data.results[0];
                 const monthName = new Date(2000, ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-                    'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(data.results[0].lineContent.toLowerCase().substring(0, 3)), 1)
+                    'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(firstResult.lineContent.toLowerCase().substring(0, 3)), 1)
                     .toLocaleString('default', { month: 'long' });
+                const dayNumber = firstResult.lineContent.match(/\d+/)[0];
                 
-                resultsDiv.innerHTML = `
-                    <h2>Challenges for ${monthName} ${data.results[0].lineContent.match(/\d+/)[0]}</h2>
-                `;
+                // Create header
+                const header = document.createElement('h2');
+                header.className = 'results-header';
+                header.textContent = `Challenges for ${monthName} ${dayNumber}`;
+                resultsDiv.appendChild(header);
                 
-                // Display each result
-                data.results.forEach(result => {
-                    const resultElement = document.createElement('div');
-                    resultElement.className = 'result-card';
-                    resultElement.innerHTML = `
-                        <div class="result-header">
-                            <h3 class="result-title">${result.matches[0]}</h3>
-                            <span class="result-source">${result.file}</span>
-                        </div>
-                        <p class="result-content">${result.lineContent}</p>
-                    `;
-                    resultsDiv.appendChild(resultElement);
+                // Display results grouped by source
+                Object.entries(resultsBySource).forEach(([source, results]) => {
+                    const sourceSection = document.createElement('div');
+                    sourceSection.className = 'source-section';
+                    
+                    const sourceHeader = document.createElement('h3');
+                    sourceHeader.className = 'source-header';
+                    sourceHeader.textContent = source;
+                    sourceSection.appendChild(sourceHeader);
+                    
+                    results.forEach(result => {
+                        const resultElement = document.createElement('div');
+                        resultElement.className = 'result-card';
+                        resultElement.innerHTML = `
+                            <div class="result-content">
+                                <p>${result.lineContent}</p>
+                            </div>
+                        `;
+                        sourceSection.appendChild(resultElement);
+                    });
+                    
+                    resultsDiv.appendChild(sourceSection);
                 });
             }
         });
